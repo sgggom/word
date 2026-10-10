@@ -1,0 +1,5 @@
+# 参考关卡（从原版 APK 提取）只在本地使用，不提交
+data/reference/
+__pycache__/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>字页 · Word Pages</title>
+<meta name="description" content="书页风格的单词连线谜题：上下左右滑动字母，用尽每一块字砖。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="inkRough" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.4"/>
+    </filter>
+    <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20 4c-6 0-11 4-12.5 10L6 18.5M20 4c0 6-4 11-10 12.5M20 4 8.5 15.5M4 20l2-1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/></symbol>
+    <symbol id="i-notes" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM15 3v4h4M9 11h7M9 14.5h7M9 18h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M3 5.5C6 4 9 4 12 6c3-2 6-2 9-.5V19c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5zM12 6v13.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z" fill="currentColor"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M4 12h10a6 6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -3)"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  </defs>
+</svg>
+
+<div id="app">
+
+  <!-- 封面 -->
+  <section id="home" class="screen active">
+    <div class="cover">
+      <div class="cover-frame">
+        <div class="cover-orn"><svg class="fleuron" viewBox="0 0 64 16" aria-hidden="true"><path d="M2 8h18M44 8h18" stroke="currentColor" stroke-width="1"/><circle cx="23" cy="8" r="1.4" fill="currentColor"/><circle cx="41" cy="8" r="1.4" fill="currentColor"/><path d="M32 1c4 3 4 11 0 14c-4-3-4-11 0-14z" fill="currentColor"/></svg></div>
+        <h1 class="cover-title">字&nbsp;页</h1>
+        <div class="cover-sub">WORD&nbsp;&nbsp;TILES</div>
+        <div class="cover-rule"></div>
+        <p class="cover-tag" id="coverTag">一本关于字母的安静小书</p>
+        <div class="cover-actions">
+          <button class="plate primary" id="btnContinue"><span class="plate-main">继续阅读</span><span class="plate-sub" id="contSub">第 1 页</span></button>
+          <button class="plate" id="btnToc">目 录</button>
+          <button class="plate" id="btnDaily">每日一页</button>
+          <button class="plate" id="btnDict">我的词典</button>
+        </div>
+        <div class="cover-foot">
+          <span class="ink-count"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
+          <button class="icon-btn light" id="btnSettings" aria-label="设置"><svg><use href="#i-gear"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 目录 -->
+  <section id="toc" class="screen">
+    <div class="sheet">
+      <header class="sheet-head">
+        <button class="icon-btn" data-back aria-label="返回"><svg><use href="#i-close"/></svg></button>
+        <h2>目&nbsp;&nbsp;录</h2>
+        <span class="ink-count"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
+      </header>
+      <div class="sheet-body" id="tocList"></div>
+    </div>
+  </section>
+
+  <!-- 每日一页 -->
+  <section id="daily" class="screen">
+    <div class="sheet narrow">
+      <header class="sheet-head">
+        <button class="icon-btn" data-back aria-label="返回"><svg><use href="#i-close"/></svg></button>
+        <h2>每日一页</h2>
+        <span class="ink-count"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
+      </header>
+      <div class="sheet-body daily-body">
+        <div class="diary-date">
+          <div class="diary-month" id="dMonth"></div>
+          <div class="diary-day" id="dDay"></div>
+          <div class="diary-week" id="dWeek"></div>
+        </div>
+        <div class="diary-stats">
+          <div><b id="dStreak">0</b><span>连续天数</span></div>
+          <div><b id="dTotal">0</b><span>累计完成</span></div>
+        </div>
+        <div class="week-strip" id="dWeekStrip"></div>
+        <button class="plate primary" id="btnDailyPlay">翻开今日一页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 词典 -->
+  <section id="dict" class="screen">
+    <div class="sheet">
+      <header class="sheet-head">
+        <button class="icon-btn" data-back aria-label="返回"><svg><use href="#i-close"/></svg></button>
+        <h2>我的词典</h2>
+        <span class="dict-count" id="dictCount"></span>
+      </header>
+      <div class="dict-search"><input id="dictQ" type="search" placeholder="查找已收录的单词…" autocomplete="off"></div>
+      <div class="sheet-body" id="dictList"></div>
+    </div>
+  </section>
+
+  <!-- 游戏 -->
+  <section id="game" class="screen">
+    <div class="book-wrap">
+      <div class="book" id="book">
+        <div class="page left" id="pageL">
+          <header class="run-head">
+            <button class="icon-btn" id="btnMenu" aria-label="目录"><svg><use href="#i-book"/></svg></button>
+            <span class="chap" id="chapTitle"></span>
+            <span class="ink-count mobile-only"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
+          </header>
+          <div class="list-title"><span>词&nbsp;表</span><i id="listProg">0 / 0</i></div>
+          <div class="words" id="words"></div>
+          <div class="footnote" id="footnote"></div>
+          <div class="folio desktop-only" id="folioL"></div>
+        </div>
+        <div class="page right" id="pageR">
+          <header class="run-head">
+            <span class="lvl" id="lvlTitle">第 1 页</span>
+            <span class="tag-hard" id="tagHard" hidden></span>
+            <span class="ink-count desktop-only"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
+          </header>
+          <div class="current" id="current"><span class="cur-word" id="curWord"></span></div>
+          <div class="grid-wrap" id="gridWrap">
+            <div class="grid" id="grid"></div>
+            <svg class="trail" id="trail"><polyline id="trailLine" points="" filter="url(#inkRough)"/></svg>
+            <div class="tip" id="tip" hidden></div>
+          </div>
+          <nav class="toolbar">
+            <button class="stamp" id="btnUndo" aria-label="撤回"><svg><use href="#i-undo"/></svg><span>撤回</span></button>
+            <button class="stamp" id="btnExtras" aria-label="页边批注"><svg><use href="#i-notes"/></svg><span>批注</span><em class="badge" id="extraBadge">0</em></button>
+            <button class="stamp" id="btnHint" aria-label="提示"><svg><use href="#i-feather"/></svg><span>提示</span><em class="cost">20</em></button>
+            <button class="stamp" id="btnFire" aria-label="烟花"><svg><use href="#i-spark"/></svg><span>烟花</span><em class="cost">60</em></button>
+          </nav>
+          <div class="folio" id="folioR"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+  <div class="modal" id="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <h3 id="mTitle"></h3>
+      <div id="mBody"></div>
+      <div class="modal-btns" id="mBtns"></div>
+    </div>
+  </div>
+</div>
+
+<script src="data/levels.js"></script>
+<script src="data/dictionary.js"></script>
+<script>
+  // 参考关卡（从原版 APK 提取）只放在本地 data/reference/，不随仓库发布
+  if (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+    document.write('<script src="data/reference/levels.js" onerror="this.remove()"><\/script><script src="data/reference/dictionary.js" onerror="this.remove()"><\/script>');
+  }
+</script>
+<script src="game.js"></script>
+</body>
+</html>
