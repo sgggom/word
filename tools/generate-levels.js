@@ -1,21 +1,36 @@
 // 原创关卡生成器：node tools/generate-levels.js
-// 读取 tools/words.txt，输出 data/levels.js 与 data/dictionary.js
+// 读取分级词表 tools/words.tsv（由 build-wordlist.py 从 ECDICT 生成），
+// 按每册的「难度比例」挑选目标词，输出 5 册关卡 data/levels.js 与词典 data/dictionary.js
 'use strict';
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const CAMPAIGN = 800, DAILY = 366;
+const PER_BOOK = 300, DAILY = 366;
+
+/* 词汇难度 5 档：1 非常常用 / 2 常用 / 3 一般 / 4 罕见 / 5 非常罕见
+   每册的 mix 是目标词在各档中的占比（百分比） */
+const BOOKS = [
+  { name: '第一册', sub: '入门', mix: [100, 0, 0, 0, 0] },
+  { name: '第二册', sub: '简单', mix: [50, 50, 0, 0, 0] },
+  { name: '第三册', sub: '普通', mix: [20, 40, 40, 0, 0] },
+  { name: '第四册', sub: '困难', mix: [10, 20, 30, 40, 0] },
+  { name: '第五册', sub: '专家', mix: [5, 15, 20, 30, 30] },
+];
+const DAILY_MIX = [40, 40, 20, 0, 0];
 
 /* ---------- 词表 ---------- */
-const gloss = {};
-for (const line of fs.readFileSync(path.join(__dirname, 'words.txt'), 'utf8').split(/\r?\n/)) {
-  const m = line.match(/^([A-Z]{3,8})\s+(.+)$/);
-  if (m && !gloss[m[1]]) gloss[m[1]] = m[2].trim();
+const gloss = {}, tierOf = {};
+for (const line of fs.readFileSync(path.join(__dirname, 'words.tsv'), 'utf8').split(/\r?\n/)) {
+  const m = line.match(/^([A-Z]{3,8})\t([1-5])\t(.*)$/);
+  if (m) { gloss[m[1]] = m[3]; tierOf[m[1]] = +m[2]; }
 }
-const WORDS = Object.keys(gloss);
-const byLen = {};
-WORDS.forEach(w => (byLen[w.length] = byLen[w.length] || []).push(w));
+const WORDS = Object.keys(gloss).sort();
+const byLenTier = {};   // byLenTier[长度][档位] = [...]
+WORDS.forEach(w => {
+  const a = byLenTier[w.length] = byLenTier[w.length] || {};
+  (a[tierOf[w]] = a[tierOf[w]] || []).push(w);
+});
 const MAXLEN = Math.max(...WORDS.map(w => w.length));
 
 const trie = {};
@@ -34,7 +49,7 @@ function mulberry32(a) {
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   };
 }
-let rnd = mulberry32(20261010);
+let rnd = mulberry32(1);
 const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
 const pick = a => a[Math.floor(rnd() * a.length)];
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -88,22 +103,37 @@ function randomWalk(empty, L, W, H) {
   return null;
 }
 
-/* 用词表单词铺满整个网格 */
-function fillGrid(W, H, maxLen) {
+/* 按比例挑档位：mix 为各档占比，have 为已选各档数量，优先补缺口最大的档 */
+function tierByDeficit(mix, have, total, avail) {
+  let best = 0, bestGap = -Infinity;
+  for (let t = 1; t <= 5; t++) {
+    if (!mix[t - 1] || !avail(t)) continue;
+    const gap = mix[t - 1] / 100 * (total + 1) - have[t] + rnd() * 0.3;
+    if (gap > bestGap) { bestGap = gap; best = t; }
+  }
+  return best;
+}
+
+/* 用词表单词铺满整个网格（铺底词同样遵循比例） */
+function fillGrid(W, H, cfg) {
   const N = W * H, grid = Array(N).fill(null), fills = [], used = new Set();
+  const have = [0, 0, 0, 0, 0, 0];
   const empty = new Set([...Array(N).keys()]);
+  const maxLen = Math.min(MAXLEN, cfg.maxLen);
   while (empty.size) {
     const n = empty.size;
     const lens = [];
-    for (let L = 3; L <= Math.min(maxLen, n); L++) if ((n - L === 0 || n - L >= 3) && byLen[L]) lens.push(L);
+    for (let L = 3; L <= Math.min(maxLen, n); L++) if ((n - L === 0 || n - L >= 3) && byLenTier[L]) lens.push(L);
     if (!lens.length) return null;
-    // 越早放的词越长，形成「主题长词」
     const L = fills.length === 0 ? lens[lens.length - 1 - Math.floor(rnd() * Math.min(2, lens.length))] : pick(lens);
+    const t = tierByDeficit(cfg.mix, have, fills.length, tt => (byLenTier[L][tt] || []).length > 0);
+    if (!t) return null;
+    let w = null;
+    for (let k = 0; k < 20 && !w; k++) { const c = pick(byLenTier[L][t]); if (!used.has(c)) w = c; }
+    if (!w) return null;
     const p = randomWalk(empty, L, W, H);
     if (!p) return null;
-    const cands = byLen[L].filter(w => !used.has(w));
-    const w = pick(cands);
-    used.add(w);
+    used.add(w); have[t]++;
     p.forEach((c, k) => { grid[c] = w[k]; empty.delete(c); });
     fills.push({ w, p });
   }
@@ -129,48 +159,65 @@ function findWords(grid, W, H) {
   return found;
 }
 
+/* 目标词的档位分布与比例的偏差（越小越好） */
+function mixError(words, mix) {
+  const n = words.length; let e = 0;
+  for (let t = 1; t <= 5; t++) e += Math.abs(words.filter(w => tierOf[w] === t).length / n - mix[t - 1] / 100);
+  return e;
+}
+
 /* ---------- 单个关卡 ---------- */
 let nextId = 1;
 function makeLevel(cfg) {
   const { W, H } = cfg;
   let best = null;
-  for (let attempt = 0; attempt < 300; attempt++) {
-    const f = fillGrid(W, H, Math.min(MAXLEN, cfg.maxLen || MAXLEN));
+  for (let attempt = 0; attempt < 120; attempt++) {
+    const f = fillGrid(W, H, cfg);
     if (!f) continue;
     const found = findWords(f.grid, W, H);
     const fillSet = new Set(f.fills.map(x => x.w));
-    const others = shuffle([...found.keys()].filter(w => !fillSet.has(w)));
+    const pool = shuffle([...found.keys()].filter(w => !fillSet.has(w) && cfg.mix[tierOf[w] - 1] > 0));
     const want = ri(cfg.tmin, cfg.tmax);
-    const extraTargets = others.slice(0, Math.max(0, want - f.fills.length));
-    const targets = [...f.fills.map(x => ({ w: x.w, p: x.p })), ...extraTargets.map(w => ({ w, p: pick(found.get(w)) }))];
-    const score = targets.length >= cfg.tmin ? 100 + others.length : targets.length;
-    const cand = { f, found, targets, extras: others.slice(extraTargets.length) };
-    if (!best || score > best.score) best = { ...cand, score };
-    if (targets.length >= cfg.tmin) break;
+    const chosen = f.fills.map(x => x.w);
+    const have = [0, 0, 0, 0, 0, 0]; chosen.forEach(w => have[tierOf[w]]++);
+    while (chosen.length < want) {
+      const t = tierByDeficit(cfg.mix, have, chosen.length, tt => pool.some(w => tierOf[w] === tt));
+      if (!t) break;
+      const k = pool.findIndex(w => tierOf[w] === t);
+      chosen.push(pool[k]); have[t]++; pool.splice(k, 1);
+    }
+    const score = (chosen.length >= cfg.tmin ? 0 : 10) + mixError(chosen, cfg.mix);
+    if (!best || score < best.score) best = { f, found, chosen, score };
+    if (score < 0.25) break;
   }
   if (!best) throw new Error('无法生成关卡');
-  const { f, targets, extras } = best;
+  const { f, found, chosen } = best;
+  const fillPath = Object.fromEntries(f.fills.map(x => [x.w, x.p]));
+  const targets = chosen.map(w => ({ w, p: fillPath[w] || pick(found.get(w)) }));
+  const extras = [...found.keys()].filter(w => !chosen.includes(w));
   const N = W * H, counts = Array(N).fill(0);
   targets.forEach(t => t.p.forEach(c => counts[c]++));
 
+  const t = chosen.slice().sort((a, b) => a.length - b.length || a.localeCompare(b));
   const lvl = {
     id: nextId++,
     g: Array.from({ length: H }, (_, r) => f.grid.slice(r * W, r * W + W).join('')).join(','),
-    t: targets.map(t => t.w).sort((a, b) => a.length - b.length || a.localeCompare(b)).join(' '),
-    e: extras.slice(0, 16).sort().join(' '),
+    t: t.join(' '),
+    lv: t.map(w => tierOf[w]).join(''),   // 每个目标词的难度档位
+    e: extras.sort().join(' '),
     n: counts.map(c => c.toString(36)).join(''),
   };
 
   // 幕布：盖住一条边，先找到若干个不经过它的词才揭开
   if (cfg.curtain) {
     const regions = [];
-    regions.push([...Array(H).keys()].map(r => r * W));                // 左列
-    regions.push([...Array(H).keys()].map(r => r * W + W - 1));        // 右列
-    regions.push([...Array(W).keys()]);                                  // 顶行
-    if (H >= 3) regions.push([...Array(W).keys()].map(c => (H - 1) * W + c)); // 底行
+    regions.push([...Array(H).keys()].map(r => r * W));
+    regions.push([...Array(H).keys()].map(r => r * W + W - 1));
+    regions.push([...Array(W).keys()]);
+    if (H >= 3) regions.push([...Array(W).keys()].map(c => (H - 1) * W + c));
     for (const reg of shuffle(regions)) {
       const s = new Set(reg);
-      const free = targets.filter(t => !t.p.some(c => s.has(c))).length;
+      const free = targets.filter(x => !x.p.some(c => s.has(c))).length;
       if (free >= 2 && free < targets.length) {
         lvl.o = [[Math.min(free, ri(2, 5)), reg.slice().sort((a, b) => a - b)]];
         break;
@@ -180,36 +227,49 @@ function makeLevel(cfg) {
   return lvl;
 }
 
-function campaignCfg(i) {
-  if (i < 6) return { W: 3, H: 2, tmin: 2, tmax: 4, maxLen: 4 };
-  if (i < 25) return { W: 3, H: 3, tmin: 3, tmax: 5 };
-  if (i < 60) return pick([{ W: 3, H: 3, tmin: 4, tmax: 6 }, { W: 4, H: 2, tmin: 4, tmax: 6 }, { W: 4, H: 3, tmin: 5, tmax: 7 }]);
-  const curtain = i >= 30 && i % 3 === 0;
-  if (i < 250) return { ...pick([{ W: 4, H: 3, tmin: 6, tmax: 9 }, { W: 3, H: 3, tmin: 5, tmax: 7 }]), curtain };
-  return { ...pick([{ W: 4, H: 3, tmin: 7, tmax: 10 }, { W: 5, H: 3, tmin: 8, tmax: 12 }]), curtain };
+function bookCfg(b, i) {
+  const maxLen = [6, 7, 8, 8, 8][b];
+  let shape;
+  if (b === 0) {
+    if (i < 8) shape = { W: 3, H: 2, tmin: 2, tmax: 4 };
+    else if (i < 40) shape = { W: 3, H: 3, tmin: 3, tmax: 5 };
+    else if (i < 120) shape = pick([{ W: 3, H: 3, tmin: 4, tmax: 6 }, { W: 4, H: 3, tmin: 5, tmax: 8 }]);
+    else shape = pick([{ W: 4, H: 3, tmin: 6, tmax: 9 }, { W: 5, H: 3, tmin: 7, tmax: 11 }]);
+  } else {
+    if (i < 15) shape = { W: 3, H: 3, tmin: 3, tmax: 5 };
+    else if (i < 80) shape = pick([{ W: 4, H: 3, tmin: 5, tmax: 8 }, { W: 3, H: 3, tmin: 4, tmax: 6 }]);
+    else shape = pick([{ W: 4, H: 3, tmin: 6, tmax: 9 }, { W: 5, H: 3, tmin: 7, tmax: 11 }, ...(b >= 3 ? [{ W: 4, H: 4, tmin: 7, tmax: 11 }] : [])]);
+  }
+  const curtain = i >= 30 && (b >= 2 ? i % 2 === 0 : i % 3 === 0) && shape.W * shape.H >= 9;
+  return { ...shape, mix: BOOKS[b].mix, maxLen, curtain };
 }
 
-const levels = [];
-for (let i = 0; i < CAMPAIGN; i++) {
-  const cfg = campaignCfg(i);
-  if (i >= 30 && i < 60 && i % 3 === 0) { cfg.W = 4; cfg.H = 3; cfg.curtain = true; }
-  levels.push(makeLevel(cfg));
-}
+const books = BOOKS.map((bk, b) => {
+  rnd = mulberry32(20261010 + b * 7919);
+  const levels = [];
+  for (let i = 0; i < PER_BOOK; i++) levels.push(makeLevel(bookCfg(b, i)));
+  return { ...bk, levels };
+});
 rnd = mulberry32(366);
 const daily = [];
-for (let i = 0; i < DAILY; i++) daily.push(makeLevel({ ...pick([{ W: 4, H: 3, tmin: 7, tmax: 10 }, { W: 5, H: 3, tmin: 9, tmax: 12 }]), curtain: i % 4 === 0 }));
+for (let i = 0; i < DAILY; i++) daily.push(makeLevel({ ...pick([{ W: 4, H: 3, tmin: 7, tmax: 10 }, { W: 5, H: 3, tmin: 8, tmax: 12 }]), mix: DAILY_MIX, maxLen: 7, curtain: i % 4 === 0 }));
 
-const usedWords = new Set();
-for (const l of [...levels, ...daily]) { l.t.split(' ').forEach(w => usedWords.add(w)); if (l.e) l.e.split(' ').forEach(w => usedWords.add(w)); }
-const defs = {};
-[...usedWords].sort().forEach(w => { defs[w] = [['', gloss[w]]]; });
+// 词典收录整份分级词表（编辑器与词典页都会用到），用紧凑的制表符文本存储
+const dictText = WORDS.map(w => `${w}\t${tierOf[w]}\t${gloss[w]}`).join('\n');
 
 fs.mkdirSync(path.join(ROOT, 'data'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'data', 'levels.js'),
-  '// 由 tools/generate-levels.js 生成的原创关卡\nwindow.LEVELS=' + JSON.stringify(levels) + ';\nwindow.DAILY=' + JSON.stringify(daily) + ';\n');
+  '// 由 tools/generate-levels.js 生成的原创关卡（5 册）\nwindow.BOOKS=' + JSON.stringify(books) + ';\nwindow.DAILY=' + JSON.stringify(daily) + ';\n');
 fs.writeFileSync(path.join(ROOT, 'data', 'dictionary.js'),
-  '// 由 tools/generate-levels.js 生成：原创词表的中文释义\nwindow.DEFS=' + JSON.stringify(defs) + ';\n');
+  '// 由 tools/generate-levels.js 生成：分级词表与中文释义（来源 ECDICT，MIT 许可）\n' +
+  '(function(s){var D=window.DEFS={},T=window.TIER={};s.split("\\n").forEach(function(l){var p=l.split("\\t");D[p[0]]=[["",p[2]]];T[p[0]]=+p[1];});})(' +
+  JSON.stringify(dictText) + ');\n');
 
 const avg = a => (a.reduce((x, y) => x + y, 0) / a.length).toFixed(1);
-console.log(`词表 ${WORDS.length} 词；主线 ${levels.length} 关，每日 ${daily.length} 关；` +
-  `平均目标词 ${avg(levels.map(l => l.t.split(' ').length))}；幕布关 ${levels.filter(l => l.o).length}`);
+console.log(`词表 ${WORDS.length} 词；每日 ${daily.length} 关`);
+books.forEach(bk => {
+  const ls = bk.levels, tiers = ls.flatMap(l => l.lv.split('').map(Number));
+  const dist = [1, 2, 3, 4, 5].map(t => Math.round(100 * tiers.filter(x => x === t).length / tiers.length)).join('/');
+  console.log(`${bk.name}（${bk.sub}）${ls.length} 关；平均目标词 ${avg(ls.map(l => l.t.split(' ').length))}；幕布关 ${ls.filter(l => l.o).length}；` +
+    `目标比例 ${bk.mix.join('/')} → 实际 ${dist}`);
+});

@@ -103,6 +103,71 @@
     </div>
   </section>
 
+  <!-- 关卡编辑器（大厅按空格 / 长按封面标题） -->
+  <section id="editor" class="screen">
+    <div class="sheet wide">
+      <header class="sheet-head">
+        <button class="icon-btn" data-back aria-label="返回"><svg><use href="#i-close"/></svg></button>
+        <h2>关卡编辑器</h2>
+        <span class="ed-hint">Esc 返回</span>
+      </header>
+      <div class="sheet-body ed-body">
+        <div class="ed-col ed-board">
+          <div class="ed-row">
+            <span class="ed-label">尺寸</span>
+            <span class="stepper">宽<button data-dim="W" data-d="-1">−</button><b id="edW">4</b><button data-dim="W" data-d="1">+</button></span>
+            <span class="stepper">高<button data-dim="H" data-d="-1">−</button><b id="edH">3</b><button data-dim="H" data-d="1">+</button></span>
+          </div>
+          <div class="ed-row">
+            <span class="ed-label">画笔</span>
+            <span class="seg" id="edMode">
+              <button data-mode="letter" class="on">字母</button>
+              <button data-mode="0">幕布 A</button>
+              <button data-mode="1">幕布 B</button>
+            </span>
+            <label class="ed-req" id="edReqWrap" hidden>揭开需 <input type="number" id="edReq" min="1" max="30" value="2"> 词</label>
+          </div>
+          <div class="ed-grid-wrap"><div class="ed-grid" id="edGrid"></div></div>
+          <div class="ed-row center">
+            <button class="ed-btn" id="edRandom">随机补全空格</button>
+            <button class="ed-btn" id="edClearLetters">清空字母</button>
+          </div>
+          <ul class="ed-status" id="edStatus"></ul>
+        </div>
+
+        <div class="ed-col ed-side">
+          <input class="ed-name" id="edName" placeholder="给这一页起个名字（可选）" maxlength="24" autocomplete="off">
+          <div class="ed-sec"><span>词&nbsp;表</span><i id="edWordCount">0</i></div>
+          <form class="ed-add" id="edAddForm" autocomplete="off">
+            <input id="edWordIn" placeholder="输入单词，回车添加" autocapitalize="characters" spellcheck="false">
+            <button class="ed-btn" type="submit">添加</button>
+          </form>
+          <div class="chips" id="edWords"></div>
+
+          <div class="ed-sec"><span>盘面中的单词</span><button class="text-btn" id="edScan">重新查找</button></div>
+          <div class="chips sugg" id="edSugg"></div>
+          <div class="ed-tip">点击加入词表；<button class="text-btn" id="edAllExtra">把剩下的都设为额外单词</button></div>
+
+          <div class="ed-sec"><span>额外单词</span><i id="edExtraCount">0</i></div>
+          <div class="chips" id="edExtras"></div>
+
+          <div class="ed-actions">
+            <button class="plate primary" id="edPlay">试 玩</button>
+            <button class="plate" id="edSave">保 存</button>
+          </div>
+          <div class="ed-row center small">
+            <button class="text-btn" id="edNew">新建</button>
+            <button class="text-btn" id="edExport">导出</button>
+            <button class="text-btn" id="edImport">导入</button>
+          </div>
+
+          <div class="ed-sec"><span>我的关卡</span><i id="edSavedCount">0</i></div>
+          <div class="ed-saved" id="edSaved"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- 游戏 -->
   <section id="game" class="screen">
     <div class="book-wrap">
@@ -113,8 +178,9 @@
             <span class="chap" id="chapTitle"></span>
             <span class="ink-count mobile-only"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
           </header>
-          <div class="list-title"><span>词&nbsp;表</span><i id="listProg">0 / 0</i></div>
+          <div class="list-title"><span>词&nbsp;表</span><button class="info-btn" id="btnInfo" title="本页信息">本页信息</button><i id="listProg">0 / 0</i></div>
           <div class="words" id="words"></div>
+          <div class="info" id="info" hidden></div>
           <div class="footnote" id="footnote"></div>
           <div class="folio desktop-only" id="folioL"></div>
         </div>
@@ -161,5 +227,6 @@
   }
 </script>
 <script src="game.js"></script>
+<script src="editor.js"></script>
 </body>
 </html>

@@ -8,12 +8,16 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 const HAS_REF = !!window.REF_LEVELS;
 let SET = 'orig';
 try{ if(HAS_REF && localStorage.getItem('wordpages.set')==='ref') SET='ref'; }catch(e){}
-const LEVELS = (SET==='ref' ? window.REF_LEVELS : window.LEVELS) || [];
+/* 原创关卡分 5 册（按词汇难度比例生成）；参考关卡视为单独一册 */
+const BOOKS = SET==='ref' ? [{name:'参考关卡', sub:'', levels:window.REF_LEVELS||[]}] : (window.BOOKS||[]);
 const DAILY = (SET==='ref' ? window.REF_DAILY : window.DAILY) || [];
 const DEFS = (SET==='ref' ? window.REF_DEFS : window.DEFS) || {};
+const ZH_DEFS = window.DEFS || {};          // 分级词表的中文释义（两套关卡都可查）
+const TIER = window.TIER || {};             // 单词难度档位 1-5
+const TIER_NAMES = ['','非常常用','常用','一般','罕见','非常罕见'];
 const CHAPTER_SIZE = 20;
 const COST_HINT = 20, COST_FIRE = 60;
-const STORE_KEY = SET==='ref' ? 'wordpages.v1' : 'wordpages.orig.v1';
+const STORE_KEY = SET==='ref' ? 'wordpages.v1' : 'wordpages.orig.v2';
 
 const CHAPTER_NAMES = ['晨光','旧书店','雨巷','墨痕','远行','灯下','潮汐','林间','信笺','星图',
   '归途','炉火','渡口','钟声','纸鸢','雪夜','长廊','花信','山居','旧梦','海风','月台','茶事','鹿鸣'];
@@ -43,6 +47,21 @@ let save;
 try{ save = Object.assign({}, DEFAULT_SAVE, JSON.parse(localStorage.getItem(STORE_KEY)||'{}')); }
 catch(e){ save = Object.assign({}, DEFAULT_SAVE); }
 function persist(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(save)); }catch(e){} }
+
+/* 当前册：save.level / save.cur 始终表示当前册的进度，其他册的进度收在 save.shelf 里 */
+let book = Math.min(save.book||0, Math.max(0, BOOKS.length-1));
+let LEVELS = (BOOKS[book]||{levels:[]}).levels;
+function bookProgress(b){ return b===book ? save.level : ((save.shelf||{})[b]||{}).level||0; }
+function switchBook(nb){
+  if(nb===book || !BOOKS[nb]) return;
+  save.shelf = save.shelf || {};
+  save.shelf[book] = {level:save.level, cur: save.cur && save.cur.mode==='c' ? save.cur : null};
+  const s2 = save.shelf[nb] || {};
+  save.level = s2.level || 0;
+  if(!save.cur || save.cur.mode==='c') save.cur = s2.cur || null;
+  book = nb; save.book = nb; LEVELS = BOOKS[nb].levels;
+  persist();
+}
 
 /* ================= 音效 ================= */
 let actx = null;
@@ -89,6 +108,7 @@ function show(id){
   if(id==='toc') renderToc();
   if(id==='daily') renderDaily();
   if(id==='dict') renderDict();
+  if(id==='editor' && window.Editor) window.Editor.render();
 }
 function updateInk(bump){
   $$('.ink-val').forEach(e=>e.textContent=save.coins);
@@ -117,7 +137,7 @@ function closeModal(){ $('#modal').hidden=true; }
 function campaignIdx(){ return Math.min(save.level, LEVELS.length-1); }
 function renderHome(){
   const i = save.cur && save.cur.mode==='c' ? save.cur.idx : campaignIdx();
-  $('#contSub').textContent = `第${cnum(Math.floor(i/CHAPTER_SIZE)+1)}章 · 第 ${i+1} 页`;
+  $('#contSub').textContent = `${BOOKS.length>1 ? BOOKS[book].name+'·'+BOOKS[book].sub+' · ' : ''}第${cnum(Math.floor(i/CHAPTER_SIZE)+1)}章 · 第 ${i+1} 页`;
   $('#coverTag').textContent = SET==='ref' ? '参考关卡 · 仅在本地可用' : '一本关于字母的安静小书';
 }
 
@@ -130,6 +150,22 @@ function renderToc(){
   const curCh=Math.floor(campaignIdx()/CHAPTER_SIZE);
   if(tocOpen<0) tocOpen=curCh;
   const frag=document.createDocumentFragment();
+  if(BOOKS.length>1){
+    const shelf=document.createElement('div'); shelf.className='shelf';
+    BOOKS.forEach((bk,b)=>{
+      const n=bk.levels.length, done=Math.min(n, bookProgress(b));
+      const bar=(bk.mix||[]).map((x,t)=>x?`<i class="t${t+1}" style="flex:${x}" title="${TIER_NAMES[t+1]} ${x}%"></i>`:'').join('');
+      const el=document.createElement('button');
+      el.className='vol'+(b===book?' on':'');
+      el.innerHTML=`<b>${bk.name}</b><span>${bk.sub}</span><em class="mixbar">${bar}</em><small>${done} / ${n}</small>`;
+      el.onclick=()=>{ switchBook(b); tocOpen=-1; renderToc(); };
+      shelf.appendChild(el);
+    });
+    frag.appendChild(shelf);
+    const legend=document.createElement('div'); legend.className='mix-legend';
+    legend.innerHTML=[1,2,3,4,5].map(t=>`<span><i class="t${t}"></i>${TIER_NAMES[t]}</span>`).join('');
+    frag.appendChild(legend);
+  }
   for(let k=0;k<nCh;k++){
     const first=k*CHAPTER_SIZE, last=Math.min(LEVELS.length,first+CHAPTER_SIZE)-1;
     const locked = first>save.level;
@@ -153,7 +189,7 @@ function renderToc(){
   }
   list.appendChild(frag);
   const open=list.querySelector('.chap-pages');
-  if(open) open.previousElementSibling.scrollIntoView({block:'center'});
+  if(open && tocOpen>0) open.previousElementSibling.scrollIntoView({block:'center'});
 }
 
 /* ================= 每日一页 ================= */
@@ -198,7 +234,7 @@ function renderDict(){
   let html='', cur='';
   ws.slice(0,600).forEach(w=>{
     if(w[0]!==cur){ cur=w[0]; html+=`<div class="d-letter">${cur}</div>`; }
-    const d=DEFS[w];
+    const d=DEFS[w]||ZH_DEFS[w];
     const sense = d ? d.slice(0,2).map(s=>`<i>${POS[s[0]]||''}</i><span>${esc(s[1])}</span>`).join('；') : '<span style="opacity:.6">（暂无释义）</span>';
     html+=`<div class="d-entry"><b>${w.toLowerCase()}</b>${sense}</div>`;
   });
@@ -218,6 +254,7 @@ function parseLevel(d){
   return {
     id:d.id, rows, H, W, N:H*W, letters:rows.join(''),
     words, types: d.ty ? d.ty.split('').map(Number) : words.map(()=>0),
+    tiers: d.lv ? d.lv.split('').map(Number) : words.map(w=>TIER[w]||0),
     extras: d.e ? d.e.split(' ') : [],
     counts0: d.n.split('').map(ch=>parseInt(ch,36)),
     curtains: (d.o||[]).map(([req,cells])=>({req,cells})),
@@ -261,7 +298,7 @@ function pathsFor(word, avail, limit=400){
 }
 
 /* 求解剩余单词：返回步骤序列；null 表示无解；'?' 表示超出预算 */
-function solve(counts=P.counts, found=P.found){
+function solve(counts=P.counts, found=P.found, foundN=nFound()){
   const remaining=[]; found.forEach((f,i)=>{ if(!f) remaining.push(i); });
   const cnt=counts.slice(), failed=new Set();
   let budget=60000;
@@ -290,11 +327,12 @@ function solve(counts=P.counts, found=P.found){
     }
     failed.add(key); return null;
   }
-  try{ return rec(remaining, nFound()); }catch(e){ return '?'; }
+  try{ return rec(remaining, foundN); }catch(e){ return '?'; }
 }
 
 /* ================= 开始关卡 ================= */
-function levelData(m,i){ return m==='d' ? DAILY[i] : LEVELS[i]; }
+let customLevel = null;   // 编辑器试玩的关卡
+function levelData(m,i){ return m==='e' ? customLevel : (m==='d' ? DAILY[i] : LEVELS[i]); }
 function dailyIndex(){ return (dayOfYear()-1) % DAILY.length; }
 
 function startLevel(m, i, opts={}){
@@ -309,13 +347,12 @@ function loadLevel(m, i){
   mode=m; idx=i; dailyKey = m==='d' ? todayKey() : '';
   L = parseLevel(levelData(m,i));
   const c=save.cur;
-  if(c && c.mode===m && c.idx===i && c.id===L.id && (m!=='d' || c.key===dailyKey) && !c.play.done){
+  if(m!=='e' && c && c.mode===m && c.idx===i && c.id===L.id && (m!=='d' || c.key===dailyKey) && !c.play.done){
     P = Object.assign(freshPlay(), c.play);
   } else {
     P = freshPlay();
   }
-  save.cur = {mode:m, idx:i, id:L.id, key:dailyKey, play:P};
-  persist();
+  if(m!=='e'){ save.cur = {mode:m, idx:i, id:L.id, key:dailyKey, play:P}; persist(); }
   renderGame();
 }
 
@@ -323,13 +360,17 @@ function loadLevel(m, i){
 function renderGame(){
   closeModal();
   const ch=Math.floor(idx/CHAPTER_SIZE);
-  if(mode==='d'){
+  if(mode==='e'){
+    $('#chapTitle').textContent='关卡编辑器 · 试玩';
+    $('#lvlTitle').textContent=customLevel.name ? '《'+customLevel.name+'》' : '自制关卡';
+    $('#folioL').textContent='— ✎ —'; $('#folioR').textContent='— ✎ —';
+  } else if(mode==='d'){
     const d=new Date();
     $('#chapTitle').textContent=`每日一页 · ${d.getMonth()+1}月${d.getDate()}日`;
     $('#lvlTitle').textContent='今日一页';
     $('#folioL').textContent='— ✦ —'; $('#folioR').textContent='— '+d.getDate()+' —';
   } else {
-    $('#chapTitle').textContent=`${chapterTitle(ch)} · ${CHAPTER_NAMES[ch%CHAPTER_NAMES.length]}`;
+    $('#chapTitle').textContent=`${BOOKS.length>1 ? BOOKS[book].name+' · ' : ''}${chapterTitle(ch)} · ${CHAPTER_NAMES[ch%CHAPTER_NAMES.length]}`;
     $('#lvlTitle').textContent=`第 ${idx+1} 页`;
     $('#folioL').textContent=`— ${idx*2+2} —`; $('#folioR').textContent=`— ${idx*2+3} —`;
   }
@@ -359,13 +400,15 @@ function renderWords(){
       const rev=P.rev[i].includes(k);
       h+=`<span class="lt${rev?' rev':''}" style="animation-delay:${k*45}ms">${(P.found[i]||rev)?w[k]:''}</span>`;
     }
-    if(L.types[i]===2) h+='<span class="mark" title="难词">★</span>';
+    if(L.tiers[i]>=4) h+=`<span class="mark t${L.tiers[i]}" title="${TIER_NAMES[L.tiers[i]]}">${L.tiers[i]===5?'◆':'◇'}</span>`;
+    else if(L.types[i]===2) h+='<span class="mark" title="难词">★</span>';
     else if(L.types[i]===1) h+='<span class="mark" title="生僻词">◆</span>';
     el.innerHTML=h;
     el.onclick=()=>{ if(P.found[i]) showDef(w); };
     box.appendChild(el);
   });
   updateProg();
+  renderInfo();
 }
 function updateProg(){ $('#listProg').textContent=`${nFound()} / ${L.words.length}`; }
 function refreshWord(i, anim){
@@ -381,10 +424,48 @@ function refreshWord(i, anim){
   if(anim && !P.found[i]){ el.classList.remove('hinted'); void el.offsetWidth; el.classList.add('hinted'); }
 }
 function showDef(w){
-  const f=$('#footnote'), d=DEFS[w];
+  const f=$('#footnote'), d=DEFS[w]||ZH_DEFS[w];
   const sense = d ? d.slice(0,2).map(s=>`<i>${POS[s[0]]||''}</i><span>${esc(s[1])}</span>`).join('；') : '<span style="opacity:.7">（此词暂无释义）</span>';
-  f.innerHTML=`<b>${w.toLowerCase()}</b>${sense}`;
+  f.innerHTML=`<b>${w.toLowerCase()}</b>${TIER[w]?`<em class="tier t${TIER[w]}">${TIER_NAMES[TIER[w]]}</em>`:''}${sense}`;
   f.classList.add('show');
+}
+
+/* ---------- 本页信息 ---------- */
+/* 用求解器得到一组与使用次数一致的路径，统计：倒序 / 直线 / 一拐 / 多拐 */
+function levelStats(){
+  if(L.stats) return L.stats;
+  const sol=solve(L.counts0, L.words.map(()=>false), 0);
+  const st={extras:L.extras.length, words:L.words.length, rev:0, straight:0, oneTurn:0, multiTurn:0, multi:[0,0,0,0,0,0], tiers:[0,0,0,0,0,0], ok:Array.isArray(sol)};
+  L.counts0.forEach(c=>{ if(c>=2) st.multi[Math.min(c,5)]++; });
+  L.tiers.forEach(t=>st.tiers[t||0]++);
+  if(st.ok) sol.forEach(({p})=>{
+    const a=p[0], b=p[p.length-1], ar=Math.floor(a/L.W), ac=a%L.W, br=Math.floor(b/L.W), bc=b%L.W;
+    // 起点在终点左侧为正序；同一列时自上而下为正序
+    if(ac>bc || (ac===bc && ar>br)) st.rev++;
+    let turns=0;
+    for(let k=2;k<p.length;k++) if(p[k]-p[k-1]!==p[k-1]-p[k-2]) turns++;
+    if(turns===0) st.straight++; else if(turns===1) st.oneTurn++; else st.multiTurn++;
+  });
+  return L.stats=st;
+}
+function renderInfo(){
+  const box=$('#info'); if(!box) return;
+  const open=!!save.tips.infoOpen;
+  $('#btnInfo').classList.toggle('on', open);
+  box.hidden=!open;
+  if(!open) return;
+  const s=levelStats(), pct=n=>s.words?Math.round(100*n/s.words)+'%':'—';
+  const tiers=[1,2,3,4,5].filter(t=>s.tiers[t]).map(t=>`<span class="tier t${t}">${TIER_NAMES[t]} ${s.tiers[t]}</span>`).join('');
+  box.innerHTML=`
+    ${tiers?`<div class="info-tiers">${tiers}</div>`:''}
+    <dl>
+      <dt>非目标单词</dt><dd>${s.extras}</dd>
+      <dt>倒序单词</dt><dd>${s.ok?`${s.rev} / ${s.words}（${pct(s.rev)}）`:'—'}</dd>
+      <dt>多选字砖</dt><dd>2选 ${s.multi[2]} · 3选 ${s.multi[3]} · 4选 ${s.multi[4]} · 5选+ ${s.multi[5]}</dd>
+      <dt>直线单词</dt><dd>${s.ok?s.straight:'—'}</dd>
+      <dt>一拐单词</dt><dd>${s.ok?s.oneTurn:'—'}</dd>
+      <dt>多拐单词</dt><dd>${s.ok?s.multiTurn:'—'}</dd>
+    </dl>`;
 }
 
 /* ---------- 字砖 ---------- */
@@ -568,7 +649,8 @@ function acceptWord(ti, p){
   refreshWord(ti, true); updateProg();
   const w=L.words[ti];
   let label = EXPR[Math.min(w.length,7)];
-  if(L.types[ti]===2) label='难词！'; else if(L.types[ti]===1) label='生僻词！';
+  if(L.tiers[ti]===5) label='非常罕见的词！'; else if(L.tiers[ti]===4) label='罕见词！';
+  else if(L.types[ti]===2) label='难词！'; else if(L.types[ti]===1) label='生僻词！';
   else if(w.length===Math.max(...L.words.map(x=>x.length)) && w.length>=6) label='最长单词！';
   flashWord('ok'); sfx.found();
   if(label) setTimeout(()=>toast(label),120);
@@ -594,7 +676,7 @@ function undo(){
 }
 function restartLevel(){
   const keepExtras=P.extras;
-  P=freshPlay(); P.extras=keepExtras; save.cur.play=P; persist(); renderGame();
+  P=freshPlay(); P.extras=keepExtras; if(mode!=='e' && save.cur) save.cur.play=P; persist(); renderGame();
 }
 
 /* ---------- 工具：提示 / 烟花 / 批注 ---------- */
@@ -679,7 +761,7 @@ function completeLevel(){
   if(mode==='c'){
     if(idx>=save.level){ save.level=idx+1; first=true; reward=10 + (P.mistakes===0?5:0); }
     else reward=2;
-  } else {
+  } else if(mode==='d'){
     first=!save.daily[dailyKey];
     save.daily[dailyKey]=true;
     reward = first ? 25 : 2;
@@ -697,11 +779,11 @@ function showDone(restored){
   else if(P.extras.length>=3) msg=fmt(pick(MSG_BONUS), P.extras.length);
   else msg=pick(MSG_GENERIC);
   if(mode==='c' && (idx+1)%CHAPTER_SIZE===0) msg=`${chapterTitle(Math.floor(idx/CHAPTER_SIZE))}，读完了！\n下一章正在等你。`;
-  const isDaily=mode==='d';
-  const hasNext = !isDaily && idx+1<LEVELS.length;
+  const isDaily=mode==='d', isEdit=mode==='e';
+  const hasNext = !isDaily && !isEdit && idx+1<LEVELS.length;
   card.innerHTML=`
     <div class="fin">— Finis —</div>
-    <div class="big">${isDaily?'今日已读':'第 '+(idx+1)+' 页'}</div>
+    <div class="big">${isEdit?'试玩通过':(isDaily?'今日已读':'第 '+(idx+1)+' 页')}</div>
     <div class="orn"><svg class="fleuron" viewBox="0 0 64 16" aria-hidden="true"><path d="M2 8h18M44 8h18" stroke="currentColor" stroke-width="1"/><circle cx="23" cy="8" r="1.4" fill="currentColor"/><circle cx="41" cy="8" r="1.4" fill="currentColor"/><path d="M32 1c4 3 4 11 0 14c-4-3-4-11 0-14z" fill="currentColor"/></svg></div>
     <p class="msg">${msg}</p>
     <div class="stats">
@@ -710,10 +792,11 @@ function showDone(restored){
       <div><b>+${P.reward||0}</b>墨水</div>
     </div>
     ${P.mistakes===0?'<div class="seal">完美</div>':'<div class="seal">阅毕</div>'}
-    <button class="plate primary" id="btnNext">${isDaily?'合上日记':(hasNext?'翻到下一页 →':'回到目录')}</button>`;
+    <button class="plate primary" id="btnNext">${isEdit?'返回编辑器':(isDaily?'合上日记':(hasNext?'翻到下一页 →':'回到目录'))}</button>`;
   $('#pageR').appendChild(card);
   updateTools();
   card.querySelector('#btnNext').onclick=()=>{
+    if(isEdit){ show('editor'); return; }
     if(isDaily){ save.cur=null; persist(); show('daily'); return; }
     if(hasNext){ startLevel('c', idx+1, {turn:true}); }
     else { save.cur=null; persist(); show('toc'); }
@@ -770,18 +853,19 @@ $('#btnDict').onclick=()=>{ $('#dictQ').value=''; show('dict'); };
 $('#btnDailyPlay').onclick=()=>startLevel('d', dailyIndex());
 $$('[data-back]').forEach(b=>b.onclick=()=>show('home'));
 $('#btnMenu').onclick=()=>{
-  if(mode==='d') show('daily'); else { tocOpen=-1; show('toc'); }
+  if(mode==='e') show('editor'); else if(mode==='d') show('daily'); else { tocOpen=-1; show('toc'); }
 };
 $('#btnUndo').onclick=undo;
 $('#btnHint').onclick=hint;
 $('#btnFire').onclick=firework;
 $('#btnExtras').onclick=showExtras;
+$('#btnInfo').onclick=()=>{ save.tips.infoOpen=!save.tips.infoOpen; persist(); renderInfo(); };
 $('#dictQ').addEventListener('input', renderDict);
 $('#btnSettings').onclick=()=>{
   const body=document.createElement('div');
   body.innerHTML=`<div class="set-row"><span>音效</span><button class="switch${save.sound?' on':''}" id="swSound" aria-label="音效"></button></div>
     ${HAS_REF?`<div class="set-row"><span>关卡来源</span><span class="seg"><button data-set="orig" class="${SET==='orig'?'on':''}">原创</button><button data-set="ref" class="${SET==='ref'?'on':''}">参考</button></span></div>`:''}
-    <div class="set-row"><span>已读页数</span><b style="font-family:var(--serif-en)">${save.level} / ${LEVELS.length}</b></div>
+    <div class="set-row"><span>已读页数</span><b style="font-family:var(--serif-en)">${BOOKS.reduce((a,_,b)=>a+Math.min(bookProgress(b),BOOKS[b].levels.length),0)} / ${BOOKS.reduce((a,b)=>a+b.levels.length,0)}</b></div>
     <div class="set-row"><span>词典收录</span><b style="font-family:var(--serif-en)">${Object.keys(save.words).length}</b></div>
     <div style="text-align:center;margin-top:16px"><button class="text-btn" id="btnReset">清空全部进度</button></div>`;
   modal({title:'设 置', body, buttons:[{label:'完成', primary:true}]});
@@ -800,11 +884,28 @@ $('#btnSettings').onclick=()=>{
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape'){ if(!$('#modal').hidden) closeModal(); else if(screen!=='home' && screen!=='game') show('home'); }
   if(screen==='game' && (e.ctrlKey||e.metaKey) && e.key==='z'){ e.preventDefault(); undo(); }
+  // 大厅按空格打开关卡编辑器
+  if(screen==='home' && $('#modal').hidden && (e.code==='Space' || e.key===' ') && !/^(INPUT|TEXTAREA|BUTTON)$/.test(document.activeElement.tagName)){
+    e.preventDefault(); show('editor');
+  }
 });
 if(window.ResizeObserver) new ResizeObserver(()=>{ if(screen==='game') sizeGrid(); }).observe(gridWrap);
 window.addEventListener('resize', ()=>{ if(screen==='game' && L){ sizeGrid(); renderWords(); } });
 
 /* 返回主页时保存 */
 window.addEventListener('beforeunload', persist);
+/* 触屏没有空格键：长按封面标题同样可以打开编辑器 */
+(()=>{
+  let t=null;
+  const title=$('.cover-title');
+  title.addEventListener('pointerdown', ()=>{ t=setTimeout(()=>{ t=null; show('editor'); }, 700); });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>title.addEventListener(ev, ()=>{ if(t){ clearTimeout(t); t=null; } }));
+})();
+
+/* 提供给关卡编辑器（editor.js）使用的接口 */
+window.WP = {
+  show, toast, modal,
+  playCustom(level){ customLevel=level; startLevel('e', 0); },
+};
 show('home');
 })();

@@ -12,11 +12,44 @@
 
 ## 关卡
 
-`data/levels.js` 中的关卡全部由 [`tools/generate-levels.js`](tools/generate-levels.js) 基于原创词表 [`tools/words.txt`](tools/words.txt) 生成：
+### 词汇难度
+
+分级词表 [`tools/words.tsv`](tools/words.tsv) 由 [`tools/build-wordlist.py`](tools/build-wordlist.py) 从 [ECDICT](https://github.com/skywind3000/ECDICT)（MIT 许可，见 [`tools/ECDICT-LICENSE`](tools/ECDICT-LICENSE)）生成，按词频排名（COCA，缺失时用 BNC）分为 5 档：
+
+| 档位 | 名称 | 词频排名 |
+| --- | --- | --- |
+| 1 | 非常常用 | ≤ 2000 |
+| 2 | 常用 | ≤ 5000 |
+| 3 | 一般 | ≤ 10000 |
+| 4 | 罕见 | ≤ 20000 |
+| 5 | 非常罕见 | ≤ 40000 |
+
+已过滤人名、地名、缩写及不雅词汇；[`tools/words.txt`](tools/words.txt) 中的精选释义优先使用。
+
+### 五册关卡
+
+[`tools/generate-levels.js`](tools/generate-levels.js) 按每册的难度比例挑选目标词，生成 5 册 × 300 关与 366 个每日谜题：
+
+| 册 | 难度 | 非常常用 / 常用 / 一般 / 罕见 / 非常罕见 |
+| --- | --- | --- |
+| 第一册 | 入门 | 100 / 0 / 0 / 0 / 0 |
+| 第二册 | 简单 | 50 / 50 / 0 / 0 / 0 |
+| 第三册 | 普通 | 20 / 40 / 40 / 0 / 0 |
+| 第四册 | 困难 | 10 / 20 / 30 / 40 / 0 |
+| 第五册 | 专家 | 5 / 15 / 20 / 30 / 30 |
 
 ```bash
-node tools/generate-levels.js
+python tools/build-wordlist.py path/to/ecdict.csv   # 重新生成分级词表（需先下载 ECDICT）
+node tools/generate-levels.js                       # 重新生成关卡
 ```
+
+### 本页信息
+
+游戏中点击词表旁的「本页信息」（编辑器中位于检查项下方）可查看：目标词的难度构成、非目标单词数量、倒序单词占比（起点在终点左侧为正序，同一列时自上而下为正序）、2/3/4/5 选字砖数量（仅按目标单词计算）、直线 / 一拐 / 多拐单词数量。
+
+### 关卡编辑器
+
+在封面按空格键（触屏长按标题）打开，可编辑盘面、幕布、词表，实时检查可解性并试玩、保存、导入导出。
 
 ### 参考关卡（仅本地）
 
