@@ -1,0 +1,334 @@
+/* ==========================================================================
+   皮肤：<html data-skin="...">。默认「书页」使用 style.css 本身，不需要覆盖。
+   ========================================================================== */
+
+/* 通用：非书页皮肤去掉书页厚度与纸纹 */
+html[data-skin]:not([data-skin="book"]) .book::before{display:none}
+html[data-skin]:not([data-skin="book"]) .book{filter:none}
+/* 皮肤给字砖设了文字颜色，这里保证「用尽 / 幕布」状态下字母依然隐藏 */
+html[data-skin] .tile.spent,html[data-skin] .tile.curt{color:transparent!important;text-shadow:none!important}
+html[data-skin] .tile.spent .cnt,html[data-skin] .tile.curt .cnt{display:none!important}
+html[data-skin] .tile.spent .ch,html[data-skin] .tile.curt .ch{visibility:hidden}
+
+/* =========================== 复古打字机 =========================== */
+html[data-skin="typewriter"]{
+  --paper:#f4f0e4; --paper-2:#e9e3d2; --paper-edge:#d8d0bb;
+  --ink:#1f1f1c; --ink-soft:#4b4a44; --ink-faint:#8d897c; --rule:#c9c1aa;
+  --red:#b3261e; --red-soft:#c9473d; --gold:#9c7b3c; --gold-hi:#e9dcb6; --ok:#2f5d3a; --pencil:#8a877c;
+  --serif-en:"Special Elite","Courier Prime","Courier New",monospace;
+  --serif-zh:"Noto Serif SC","Songti SC","SimSun",serif;
+  --ruled:repeating-linear-gradient(180deg,transparent 0 29px,rgba(70,100,150,.16) 29px 30px);
+}
+html[data-skin="typewriter"] body{
+  background:radial-gradient(ellipse at 50% 30%,#46524a,#232a25 70%);
+}
+html[data-skin="typewriter"] .page,
+html[data-skin="typewriter"] .sheet{
+  background-color:var(--paper);
+  background-image:linear-gradient(90deg,transparent 46px,rgba(190,60,60,.32) 46px 48px,transparent 48px),var(--ruled),var(--noise);
+  box-shadow:0 1px 0 #fff inset,0 18px 40px rgba(0,0,0,.45);
+}
+html[data-skin="typewriter"] .page.left{border-radius:3px 0 0 3px;margin-right:6px}
+html[data-skin="typewriter"] .page.right{border-radius:0 3px 3px 0;margin-left:6px}
+html[data-skin="typewriter"]{
+  /* 拉丝金属环：锥形渐变做出明暗交替的反光 */
+  --chrome:conic-gradient(from 200deg,#fdfdfb,#9c9c97 9%,#e6e6e1 20%,#5c5c57 33%,#d6d6d1 46%,#fbfbf9 57%,#868681 69%,#ededE9 81%,#6a6a65 92%,#fdfdfb);
+  /* 黑色键帽：顶部一抹玻璃高光 */
+  --cap:radial-gradient(ellipse 60% 38% at 50% 24%,rgba(255,255,255,.32),transparent 70%),radial-gradient(circle at 50% 45%,#3f3f3c,#111110 72%);
+  --cap-red:radial-gradient(ellipse 60% 38% at 50% 24%,rgba(255,255,255,.3),transparent 70%),radial-gradient(circle at 50% 45%,#7a2a20,#2a0c08 72%);
+  --bevel:inset 0 1px 1px rgba(255,255,255,.95),inset 0 -1px 2px rgba(0,0,0,.55);
+}
+/* 字砖 = 金属环（本体）+ 键帽（::before），全部画在字砖范围内，不再向外溢出 */
+/* 字砖 = 镀铬边圈（本体）+ 黑色键面（::before）+ 玻璃罩高光（::after），全部画在字砖范围内 */
+html[data-skin="typewriter"] .tile{
+  border-radius:50%;
+  background:
+    linear-gradient(160deg,rgba(255,255,255,.75),rgba(255,255,255,0) 40%,rgba(0,0,0,.35) 85%),
+    var(--chrome);
+  color:#f1ece0;font-family:"Courier Prime","Courier New",monospace;font-weight:700;font-size:calc(var(--tile)*.42);
+  box-shadow:0 0 0 1px rgba(0,0,0,.45),
+    0 calc(var(--tile)*.025) 0 rgba(40,40,36,.55),
+    0 calc(var(--tile)*.07) calc(var(--tile)*.1) rgba(0,0,0,.42);
+}
+html[data-skin="typewriter"] .tile::before{
+  content:"";position:absolute;inset:calc(var(--tile)*.085);border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 125%,rgba(255,255,255,.14),transparent 55%),
+    radial-gradient(circle at 46% 38%,#2e2e2b,#0c0c0b 74%);
+  box-shadow:0 0 0 1px #050505,
+    inset 0 calc(var(--tile)*.045) calc(var(--tile)*.06) rgba(0,0,0,.9),
+    inset 0 -1px 2px rgba(255,255,255,.1);
+}
+html[data-skin="typewriter"] .tile::after{
+  content:"";position:absolute;inset:calc(var(--tile)*.12);border-radius:50%;z-index:2;pointer-events:none;
+  background:
+    radial-gradient(ellipse 34% 9% at 40% 14%,rgba(255,255,255,.75),transparent 70%),
+    radial-gradient(ellipse 72% 46% at 50% 17%,rgba(255,255,255,.5),rgba(255,255,255,.1) 58%,transparent 74%),
+    radial-gradient(ellipse 60% 20% at 50% 92%,rgba(255,255,255,.12),transparent 70%);
+}
+html[data-skin="typewriter"] .tile .ch{position:relative;z-index:1;transform:none;text-shadow:0 0 1px rgba(255,255,255,.35)}
+html[data-skin="typewriter"] .tile .cnt{z-index:3;color:#ff9384;font-family:"Courier Prime",monospace;font-style:normal;font-weight:700;
+  font-size:calc(var(--tile)*.15);top:calc(var(--tile)*.21);right:calc(var(--tile)*.24)}
+html[data-skin="typewriter"] .tile .curt-num{z-index:4}
+html[data-skin="typewriter"] .tile.sel{transform:translateY(calc(var(--tile)*.045));
+  box-shadow:0 0 0 1px rgba(0,0,0,.45),0 calc(var(--tile)*.006) 0 rgba(40,40,36,.55),0 calc(var(--tile)*.025) calc(var(--tile)*.04) rgba(0,0,0,.5)}
+html[data-skin="typewriter"] .tile.sel::before{background:radial-gradient(circle at 50% 125%,rgba(255,200,180,.18),transparent 55%),radial-gradient(circle at 46% 38%,#6b231a,#1f0805 74%)}
+html[data-skin="typewriter"] .tile.spent{background:transparent;border:2px dashed rgba(60,60,55,.35);border-radius:50%;box-shadow:none}
+html[data-skin="typewriter"] .tile.spent::before,html[data-skin="typewriter"] .tile.spent::after{display:none}
+html[data-skin="typewriter"] .tile.curt::before{background:repeating-linear-gradient(45deg,#8f8f89 0 3px,#6c6c66 3px 7px)}
+html[data-skin="typewriter"] .cur-word{font-style:normal;letter-spacing:.25em}
+html[data-skin="typewriter"] .fly{font-style:normal}
+html[data-skin="typewriter"] .stamp svg{border-radius:50%;border:0;outline:0;color:#f1ece0;padding:12px;
+  background:
+    radial-gradient(ellipse 62% 38% at 50% 22%,rgba(255,255,255,.42),rgba(255,255,255,.08) 58%,transparent 72%),
+    radial-gradient(circle closest-side,#262624 0 78%,#050505 79% 81%,transparent 82%),
+    linear-gradient(160deg,rgba(255,255,255,.75),rgba(255,255,255,0) 40%,rgba(0,0,0,.35) 85%),
+    var(--chrome);
+  box-shadow:0 0 0 1px rgba(0,0,0,.45),0 2px 0 rgba(40,40,36,.55),0 5px 8px rgba(0,0,0,.4)}
+html[data-skin="typewriter"] .stamp:active svg{transform:translateY(2px);box-shadow:0 0 0 1px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.5)}
+html[data-skin="typewriter"] #btnHint svg,html[data-skin="typewriter"] #btnFire svg{color:#ff9a8a}
+html[data-skin="typewriter"] .plate{background:#f8f5ec;border-radius:2px;font-family:var(--serif-zh);box-shadow:0 0 0 1px #8d897c,0 3px 0 #8d897c}
+html[data-skin="typewriter"] .modal-card,html[data-skin="typewriter"] .toast,html[data-skin="typewriter"] .tip{background:var(--paper);background-image:var(--ruled)}
+html[data-skin="typewriter"] .done-card{background:rgba(244,240,228,.95);background-image:var(--ruled)}
+html[data-skin="typewriter"] .cover{border-radius:18px;
+  background:radial-gradient(ellipse at 30% 15%,rgba(255,255,255,.18),transparent 50%),linear-gradient(160deg,#355640,#1d3226);
+  box-shadow:inset 0 0 0 3px #b8bbb4,inset 0 0 0 6px #2a3f31,0 30px 60px rgba(0,0,0,.6)}
+html[data-skin="typewriter"] .cover::before{display:none}
+html[data-skin="typewriter"] .cover-frame{border-color:#c9ccc4;outline-color:rgba(201,204,196,.35);color:#e9e4d2}
+html[data-skin="typewriter"] .cover-title{font-family:"Special Elite",var(--serif-zh);background:none;-webkit-text-fill-color:#efe8d2;filter:drop-shadow(0 3px 0 rgba(0,0,0,.4))}
+html[data-skin="typewriter"] .ed-tile input{border-radius:50%;color:#f1ece0;font-family:"Courier Prime",monospace;
+  background:
+    radial-gradient(ellipse 62% 38% at 50% 22%,rgba(255,255,255,.4),rgba(255,255,255,.08) 58%,transparent 72%),
+    radial-gradient(circle closest-side,#262624 0 80%,#050505 81% 83%,transparent 84%),
+    linear-gradient(160deg,rgba(255,255,255,.75),rgba(255,255,255,0) 40%,rgba(0,0,0,.35) 85%),
+    var(--chrome);
+  box-shadow:0 0 0 1px rgba(0,0,0,.45),0 4px 7px rgba(0,0,0,.4)}
+html[data-skin="typewriter"] .ed-tile.empty input{background:transparent;box-shadow:inset 0 0 0 2px rgba(60,60,55,.35)}
+
+/* =========================== 键盘 =========================== */
+html[data-skin="keyboard"]{
+  --paper:#2a2d34; --paper-2:#22252b; --paper-edge:#1a1c21;
+  --ink:#eceae4; --ink-soft:#a8acb5; --ink-faint:#6d727e; --rule:#3e434d;
+  --red:#ff7a2f; --red-soft:#ff9a5c; --gold:#ffb347; --gold-hi:#ffd08a; --ok:#3fd18b; --pencil:#8c919c;
+  --noise:none; --fibers:none;
+  --serif-en:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --serif-zh:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+}
+html[data-skin="keyboard"] body{
+  background:radial-gradient(ellipse at 50% 20%,#2a2e37,#121318 70%);
+}
+html[data-skin="keyboard"] .page,
+html[data-skin="keyboard"] .sheet{
+  background:linear-gradient(180deg,#30333b,#25282e);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1px #3a3e47,0 24px 50px rgba(0,0,0,.6);
+}
+html[data-skin="keyboard"] .page.left{border-radius:18px 4px 4px 18px;margin-right:4px}
+html[data-skin="keyboard"] .page.right{border-radius:4px 18px 18px 4px;margin-left:4px}
+html[data-skin="keyboard"] .tile{
+  border-radius:calc(var(--tile)*.16);
+  background:linear-gradient(180deg,#fbfbf8,#e2e2db);
+  color:#2a2d34;font-family:"JetBrains Mono",monospace;font-weight:700;font-size:calc(var(--tile)*.42);
+  box-shadow:inset 0 -5px 0 rgba(0,0,0,.07),inset 0 2px 0 #fff,0 calc(var(--tile)*.08) 0 #9d9d95,0 calc(var(--tile)*.11) 12px rgba(0,0,0,.5);
+}
+html[data-skin="keyboard"] .tile .ch{transform:translate(calc(var(--tile)*-.17),calc(var(--tile)*-.15))}
+html[data-skin="keyboard"] .tile .cnt{color:#ff7a2f;font-style:normal;font-family:"JetBrains Mono",monospace;right:auto;left:auto;top:auto;bottom:calc(var(--tile)*.1);right:calc(var(--tile)*.13)}
+html[data-skin="keyboard"] .tile.sel{transform:translateY(calc(var(--tile)*.06));background:linear-gradient(180deg,#ffb070,#ff7a2f);color:#fff;
+  box-shadow:inset 0 -4px 0 rgba(0,0,0,.1),0 calc(var(--tile)*.025) 0 #b9541c,0 4px 8px rgba(0,0,0,.4)}
+html[data-skin="keyboard"] .tile.sel .cnt{color:#fff}
+html[data-skin="keyboard"] .tile.spent{border:0;border-radius:calc(var(--tile)*.16);background:#1b1d22;box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+html[data-skin="keyboard"] .tile.spent::after{content:"+";position:absolute;inset:0;display:grid;place-items:center;color:#5b2d16;font-size:calc(var(--tile)*.5);font-weight:700}
+html[data-skin="keyboard"] .tile.curt{background:repeating-linear-gradient(45deg,#3a3e47 0 4px,#30333b 4px 9px);box-shadow:0 calc(var(--tile)*.08) 0 #1b1d22}
+html[data-skin="keyboard"] .cur-word{font-style:normal;color:#ffd08a;text-shadow:0 0 14px rgba(255,160,80,.35)}
+html[data-skin="keyboard"] .fly{font-style:normal;color:#ffd08a}
+html[data-skin="keyboard"] .stamp svg{border-radius:12px;border:0;outline:0;background:linear-gradient(180deg,#3d414b,#30333b);color:#eceae4;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 5px 0 #18191d}
+html[data-skin="keyboard"] #btnHint svg,html[data-skin="keyboard"] #btnFire svg{color:#ff9a5c}
+html[data-skin="keyboard"] .stamp .cost{background:#2a2d34;border-color:#3e434d;color:#eceae4}
+html[data-skin="keyboard"] .plate{background:linear-gradient(180deg,#fbfbf8,#e2e2db);color:#2a2d34;border-radius:10px;box-shadow:0 5px 0 #9d9d95,0 8px 14px rgba(0,0,0,.4)}
+html[data-skin="keyboard"] .plate-sub{color:#5d616b}
+html[data-skin="keyboard"] .modal-btns .plate.primary,html[data-skin="keyboard"] .ed-actions .plate.primary{background:linear-gradient(180deg,#ffb070,#ff7a2f);color:#fff;box-shadow:0 5px 0 #b9541c}
+html[data-skin="keyboard"] .modal-card,html[data-skin="keyboard"] .toast,html[data-skin="keyboard"] .tip{background:#2a2d34;color:var(--ink);border-color:#3e434d}
+html[data-skin="keyboard"] .done-card{background:rgba(37,40,46,.96)}
+html[data-skin="keyboard"] .cover{border-radius:22px;background:#23262d;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:34px 34px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px #3a3e47,0 30px 60px rgba(0,0,0,.6)}
+html[data-skin="keyboard"] .cover::before{display:none}
+html[data-skin="keyboard"] .cover-frame{border:0;outline:0;color:#eceae4}
+html[data-skin="keyboard"] .cover-title{background:none;-webkit-text-fill-color:#ff9a5c;font-family:var(--serif-zh);filter:drop-shadow(0 0 18px rgba(255,122,47,.35))}
+html[data-skin="keyboard"] .cover-foot .ink-count,html[data-skin="keyboard"] .icon-btn.light{color:#ffd08a}
+html[data-skin="keyboard"] .ed-tile input{border-radius:10px;background:linear-gradient(180deg,#fbfbf8,#e2e2db);color:#2a2d34;box-shadow:0 5px 0 #9d9d95}
+html[data-skin="keyboard"] .ed-tile.empty input{background:#1b1d22;box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+html[data-skin="keyboard"] .ed-btn,html[data-skin="keyboard"] .chip,html[data-skin="keyboard"] .vol{background:#30333b}
+html[data-skin="keyboard"] .vol.on{background:#3a3e47}
+html[data-skin="keyboard"] .pg.done{background:rgba(63,209,139,.12)}
+html[data-skin="keyboard"] .ink-count svg,html[data-skin="keyboard"] .stamp .cost::before{color:#ffd08a;background:#ffd08a}
+html[data-skin="keyboard"] .ink-count svg{background:none}
+
+/* =========================== 液态玻璃 =========================== */
+html[data-skin="glass"]{
+  --paper:#2d2466; --paper-2:rgba(255,255,255,.1); --paper-edge:rgba(255,255,255,.2);
+  --ink:#ffffff; --ink-soft:rgba(255,255,255,.8); --ink-faint:rgba(255,255,255,.52); --rule:rgba(255,255,255,.3);
+  --red:#ff8fd1; --red-soft:#ffb0e0; --gold:#ffe08a; --gold-hi:#fff1c2; --ok:#7dffcf; --pencil:rgba(255,255,255,.6);
+  --noise:none; --fibers:none;
+  --serif-en:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif-zh:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  --glass:linear-gradient(160deg,rgba(255,255,255,.26),rgba(255,255,255,.08));
+  --glass-edge:inset 0 1px 0 rgba(255,255,255,.65),inset 0 0 0 1px rgba(255,255,255,.28),inset 0 -12px 30px rgba(255,255,255,.05);
+}
+html[data-skin="glass"] body{
+  background:#1d1550;
+  background-image:
+    radial-gradient(circle at 15% 20%,rgba(255,110,199,.85),transparent 38%),
+    radial-gradient(circle at 85% 15%,rgba(58,208,255,.8),transparent 40%),
+    radial-gradient(circle at 70% 85%,rgba(123,92,255,.9),transparent 45%),
+    radial-gradient(circle at 20% 90%,rgba(255,209,102,.7),transparent 40%);
+  background-size:140% 140%;
+  animation:glassDrift 24s ease-in-out infinite alternate;
+}
+@keyframes glassDrift{0%{background-position:0% 0%}100%{background-position:100% 100%}}
+html[data-skin="glass"] .page,
+html[data-skin="glass"] .sheet,
+html[data-skin="glass"] .modal-card,
+html[data-skin="glass"] .toast,
+html[data-skin="glass"] .tip{
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%);
+  box-shadow:var(--glass-edge),0 24px 60px rgba(20,8,70,.35);border-color:transparent;
+}
+html[data-skin="glass"] .page.left{border-radius:28px 6px 6px 28px;margin-right:5px}
+html[data-skin="glass"] .page.right{border-radius:6px 28px 28px 6px;margin-left:5px}
+html[data-skin="glass"] .sheet,html[data-skin="glass"] .modal-card{border-radius:28px}
+html[data-skin="glass"] .toast{border-radius:20px;color:#fff}
+html[data-skin="glass"] .tip{border-radius:16px;color:#fff}
+html[data-skin="glass"] .tile{
+  border-radius:calc(var(--tile)*.3);
+  background:linear-gradient(160deg,rgba(255,255,255,.5),rgba(255,255,255,.12) 55%,rgba(255,255,255,.2));
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  color:#fff;font-family:"Inter",sans-serif;font-weight:700;font-size:calc(var(--tile)*.48);text-shadow:0 2px 10px rgba(60,20,140,.45);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.9),inset 0 0 0 1px rgba(255,255,255,.35),inset 0 -10px 18px rgba(120,80,255,.18),0 12px 26px rgba(30,10,90,.35);
+}
+html[data-skin="glass"] .tile .cnt{color:#fff1c2;font-style:normal;font-family:"Inter",sans-serif;font-weight:600}
+html[data-skin="glass"] .tile.sel{transform:scale(.93);background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.45));color:#4a2fb8;text-shadow:none;
+  box-shadow:inset 0 1px 1px #fff,0 0 0 3px rgba(255,255,255,.35),0 0 28px rgba(255,255,255,.55)}
+html[data-skin="glass"] .tile.sel .cnt{color:#8a5cff}
+html[data-skin="glass"] .tile.spent{border:1.5px dashed rgba(255,255,255,.35);border-radius:calc(var(--tile)*.3);background:rgba(255,255,255,.04);-webkit-backdrop-filter:none;backdrop-filter:none}
+html[data-skin="glass"] .tile.curt{background:repeating-linear-gradient(45deg,rgba(255,255,255,.28) 0 3px,rgba(255,255,255,.1) 3px 9px)}
+html[data-skin="glass"] .curt-num b{background:rgba(255,255,255,.9);color:#5a33d6}
+html[data-skin="glass"] .cur-word{font-style:normal;font-weight:600;text-shadow:0 2px 16px rgba(120,60,255,.6)}
+html[data-skin="glass"] .fly{font-style:normal;font-weight:700;color:#fff;text-shadow:0 0 14px rgba(255,255,255,.8)}
+html[data-skin="glass"] .fly.ok{color:#7dffcf}
+html[data-skin="glass"] .stamp{color:#fff}
+html[data-skin="glass"] .stamp svg{border:0;outline:0;background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:var(--glass-edge),0 8px 20px rgba(20,8,70,.3)}
+html[data-skin="glass"] #btnHint,html[data-skin="glass"] #btnFire{color:#ffd1ee}
+html[data-skin="glass"] .stamp .cost{background:rgba(255,255,255,.85);color:#4a2fb8;border:0}
+html[data-skin="glass"] .stamp .badge{background:#ff6ec7}
+html[data-skin="glass"] .plate{background:var(--glass);color:#fff;border-radius:18px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:var(--glass-edge),0 8px 20px rgba(20,8,70,.25)}
+html[data-skin="glass"] .plate-sub{color:rgba(255,255,255,.75)}
+html[data-skin="glass"] .plate.primary,html[data-skin="glass"] .modal-btns .plate.primary,html[data-skin="glass"] .ed-actions .plate.primary{background:rgba(255,255,255,.9);color:#4a2fb8}
+html[data-skin="glass"] .plate.primary .plate-sub{color:#7a64c8}
+html[data-skin="glass"] .done-card{background:rgba(45,30,120,.35);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+html[data-skin="glass"] .cover{border-radius:36px;background:var(--glass);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:var(--glass-edge),0 30px 70px rgba(20,8,70,.4)}
+html[data-skin="glass"] .cover::before{display:none}
+html[data-skin="glass"] .cover-frame{border:0;outline:0;color:#fff}
+html[data-skin="glass"] .cover-title{background:linear-gradient(180deg,#fff,#d9ccff);-webkit-background-clip:text;background-clip:text;font-family:var(--serif-zh);filter:drop-shadow(0 4px 18px rgba(120,60,255,.55))}
+html[data-skin="glass"] .cover-foot .ink-count,html[data-skin="glass"] .icon-btn.light,html[data-skin="glass"] .ink-count svg{color:#fff}
+html[data-skin="glass"] .ed-tile input{border-radius:16px;background:linear-gradient(160deg,rgba(255,255,255,.5),rgba(255,255,255,.14));color:#fff;box-shadow:inset 0 1px 1px #fff,0 8px 18px rgba(30,10,90,.3)}
+html[data-skin="glass"] .ed-tile.empty input{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+html[data-skin="glass"] .chip,html[data-skin="glass"] .ed-btn,html[data-skin="glass"] .vol{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3);color:#fff}
+html[data-skin="glass"] .vol.on{background:rgba(255,255,255,.28);border-color:#fff}
+html[data-skin="glass"] .pg.done{background:rgba(125,255,207,.15)}
+html[data-skin="glass"] .info-btn:hover,html[data-skin="glass"] .info-btn.on,html[data-skin="glass"] .seg button.on,html[data-skin="glass"] .switch.on{background:rgba(255,255,255,.9);color:#4a2fb8}
+html[data-skin="glass"] .dict-search input,html[data-skin="glass"] .ed-name,html[data-skin="glass"] .ed-add input{color:#fff}
+
+/* =========================== 卡通 =========================== */
+html[data-skin="cartoon"]{
+  --paper:#fffaf0; --paper-2:#fff1d6; --paper-edge:#2b2b2b;
+  --ink:#2b2b2b; --ink-soft:#575757; --ink-faint:#9a9a9a; --rule:#e6dccb;
+  --red:#ff5a5f; --red-soft:#ff7d82; --gold:#ff9f1c; --gold-hi:#ffd166; --ok:#22a865; --pencil:#a3a3a3;
+  --noise:none; --fibers:none;
+  --serif-en:"Fredoka","Baloo 2","Comic Sans MS",sans-serif;
+  --serif-zh:"ZCOOL KuaiLe","Fredoka","Microsoft YaHei",sans-serif;
+  --line:#2b2b2b;
+}
+html[data-skin="cartoon"] body{
+  background-color:#ffd84d;
+  background-image:radial-gradient(#ffc61a 22%,transparent 23%),radial-gradient(#ffc61a 22%,transparent 23%);
+  background-size:34px 34px;background-position:0 0,17px 17px;
+}
+html[data-skin="cartoon"] .page,
+html[data-skin="cartoon"] .sheet{
+  background:var(--paper);border:3px solid var(--line);box-shadow:8px 8px 0 var(--line);
+}
+html[data-skin="cartoon"] .page.left{border-radius:26px 10px 10px 26px;margin-right:8px}
+html[data-skin="cartoon"] .page.right{border-radius:10px 26px 26px 10px;margin-left:8px}
+html[data-skin="cartoon"] .sheet{border-radius:28px}
+html[data-skin="cartoon"] .run-head,html[data-skin="cartoon"] .sheet-head{border-bottom:2px dashed #e0d4bd}
+html[data-skin="cartoon"] .tile{
+  border-radius:calc(var(--tile)*.24);border:3px solid var(--line);
+  background:#ff8fab;color:var(--line);font-family:"Fredoka",sans-serif;font-weight:700;
+  box-shadow:0 calc(var(--tile)*.07) 0 var(--line);
+}
+html[data-skin="cartoon"] .tile:nth-child(5n+2){background:#8ecae6}
+html[data-skin="cartoon"] .tile:nth-child(5n+3){background:#ffd166}
+html[data-skin="cartoon"] .tile:nth-child(5n+4){background:#95d5b2}
+html[data-skin="cartoon"] .tile:nth-child(5n+5){background:#cdb4db}
+html[data-skin="cartoon"] .tile .cnt{top:-9px;right:-9px;width:22px;height:22px;border-radius:50%;background:#fff;border:2.5px solid var(--line);
+  display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700;color:var(--line);font-family:"Fredoka",sans-serif}
+html[data-skin="cartoon"] .tile.sel{transform:translateY(calc(var(--tile)*.05)) rotate(-3deg);background:#fff;box-shadow:0 calc(var(--tile)*.02) 0 var(--line)}
+html[data-skin="cartoon"] .tile.spent{border:3px dashed rgba(43,43,43,.25);background:transparent;box-shadow:none}
+html[data-skin="cartoon"] .tile.curt{background:repeating-linear-gradient(45deg,#fff 0 6px,#ffe08a 6px 12px)}
+html[data-skin="cartoon"] .curt-num b{background:var(--red);border:2.5px solid var(--line);color:#fff;box-shadow:none}
+html[data-skin="cartoon"] .cur-word{font-style:normal;font-weight:700;color:var(--line);letter-spacing:.06em;-webkit-text-stroke:0}
+html[data-skin="cartoon"] .cur-word.ok{color:var(--ok)}
+html[data-skin="cartoon"] .fly{font-style:normal;font-weight:700;color:#ff5a5f;-webkit-text-stroke:1.5px var(--line);text-shadow:3px 3px 0 var(--line)}
+html[data-skin="cartoon"] .fly.ok{color:#ffd166}
+html[data-skin="cartoon"] .fly.extra{color:#8ecae6}
+html[data-skin="cartoon"] .stamp{color:var(--line)}
+html[data-skin="cartoon"] .stamp svg{border:3px solid var(--line);outline:0;background:#fff;box-shadow:0 4px 0 var(--line)}
+html[data-skin="cartoon"] #btnHint svg{background:#ffd166}
+html[data-skin="cartoon"] #btnFire svg{background:#ff8fab}
+html[data-skin="cartoon"] #btnExtras svg{background:#8ecae6}
+html[data-skin="cartoon"] .stamp .cost{border:2px solid var(--line);background:#fff}
+html[data-skin="cartoon"] .stamp .badge{background:var(--red);border:2px solid var(--line)}
+html[data-skin="cartoon"] .plate{background:#fff;border:3px solid var(--line);border-radius:16px;box-shadow:0 5px 0 var(--line);letter-spacing:.12em}
+html[data-skin="cartoon"] .plate.primary,html[data-skin="cartoon"] .modal-btns .plate.primary,html[data-skin="cartoon"] .ed-actions .plate.primary{background:#ffd166;color:var(--line)}
+html[data-skin="cartoon"] .modal-card,html[data-skin="cartoon"] .toast,html[data-skin="cartoon"] .tip{background:#fff;border:3px solid var(--line);border-radius:20px;box-shadow:6px 6px 0 var(--line)}
+html[data-skin="cartoon"] .done-card{background:rgba(255,250,240,.96)}
+html[data-skin="cartoon"] .done-card .seal{border:4px solid var(--red);background:#fff}
+html[data-skin="cartoon"] .cover{border-radius:34px;background:#ff8fab;border:4px solid var(--line);box-shadow:10px 10px 0 var(--line)}
+html[data-skin="cartoon"] .cover::before{display:none}
+html[data-skin="cartoon"] .cover-frame{border:3px dashed rgba(43,43,43,.5);outline:0;color:var(--line)}
+html[data-skin="cartoon"] .cover-title{background:none;-webkit-text-fill-color:#fff;-webkit-text-stroke:3px var(--line);paint-order:stroke fill;filter:drop-shadow(5px 5px 0 var(--line));font-family:"ZCOOL KuaiLe",var(--serif-zh)}
+html[data-skin="cartoon"] .cover-sub,html[data-skin="cartoon"] .cover-tag{color:var(--line)}
+html[data-skin="cartoon"] .cover-rule{filter:brightness(.2)}
+html[data-skin="cartoon"] .cover-foot .ink-count,html[data-skin="cartoon"] .icon-btn.light,html[data-skin="cartoon"] .cover-foot .ink-count svg{color:var(--line)}
+html[data-skin="cartoon"] .ed-tile input{border:3px solid var(--line);border-radius:14px;background:#ffd166;box-shadow:0 4px 0 var(--line)}
+html[data-skin="cartoon"] .ed-tile.empty input{background:#fff;box-shadow:none;border-style:dashed}
+html[data-skin="cartoon"] .chip,html[data-skin="cartoon"] .ed-btn,html[data-skin="cartoon"] .vol{border:2px solid var(--line);background:#fff}
+html[data-skin="cartoon"] .vol.on{background:#ffd166;box-shadow:0 4px 0 var(--line)}
+html[data-skin="cartoon"] .pg{border:2px solid var(--line)}
+html[data-skin="cartoon"] .pg.cur{background:#ff8fab;color:var(--line)}
+html[data-skin="cartoon"] .pg.done{background:#95d5b2}
+
+/* =========================== 窄屏：单页时整本书作为一个面板 =========================== */
+@media (max-width: 820px){
+  html[data-skin]:not([data-skin="book"]) .page{background:transparent;box-shadow:none;border:0;margin:0;border-radius:0}
+  html[data-skin="typewriter"] .book{background-color:var(--paper);background-image:linear-gradient(90deg,transparent 30px,rgba(190,60,60,.32) 30px 32px,transparent 32px),var(--ruled)}
+  html[data-skin="keyboard"] .book{background:linear-gradient(180deg,#30333b,#25282e)}
+  html[data-skin="glass"] .book{background:var(--glass);-webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%)}
+  html[data-skin="cartoon"] .book{background:var(--paper)}
+  html[data-skin]:not([data-skin="book"]) .sheet,
+  html[data-skin]:not([data-skin="book"]) .cover{border-radius:0;margin:0}
+  html[data-skin="cartoon"] .sheet,html[data-skin="cartoon"] .cover{border:0;box-shadow:none}
+}
+
+/* =========================== 设置里的皮肤选择 =========================== */
+.skins{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:4px 0 6px}
+.skin-opt{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);padding:6px 2px;border-radius:8px;border:1.5px solid transparent}
+.skin-opt.on{border-color:var(--ink);color:var(--ink)}
+.skin-opt i{width:42px;height:42px;border-radius:9px;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:18px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.skin-opt i.book{background:#f3ead6;color:#2b2118;font-family:"EB Garamond",serif;box-shadow:0 0 0 1px #cdb994,0 3px 0 #c2ac82}
+.skin-opt i.typewriter{border-radius:50%;background:radial-gradient(circle at 50% 32%,#4b4b48,#141413 68%);color:#f4ecd8;font-family:"Courier New",monospace;box-shadow:0 0 0 2px #e2e2dc,0 0 0 4px #6f6f69}
+.skin-opt i.keyboard{background:linear-gradient(180deg,#fbfbf8,#e2e2db);color:#2a2d34;font-family:Consolas,monospace;box-shadow:0 4px 0 #9d9d95}
+.skin-opt i.glass{background:linear-gradient(135deg,#ff6ec7,#7b5cff 55%,#3ad0ff);color:#fff;box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 4px 12px rgba(80,40,200,.4)}
+.skin-opt i.cartoon{background:#ffd166;color:#2b2b2b;border:2.5px solid #2b2b2b;box-shadow:0 3px 0 #2b2b2b;font-family:"Comic Sans MS",sans-serif}
+@media (max-width: 420px){ .skin-opt{font-size:11px} .skin-opt i{width:36px;height:36px} }

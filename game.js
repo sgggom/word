@@ -516,7 +516,7 @@ function refreshTiles(changed=[], opened=[]){
 }
 
 /* ---------- 输入：滑动 ---------- */
-let path=[], dragging=false, pid=null, lastPt=null;
+let path=[], dragging=false, pid=null;
 const gridWrap=$('#gridWrap');
 function cellAt(x,y,strict){
   const g=$('#grid').getBoundingClientRect();
@@ -537,14 +537,13 @@ gridWrap.addEventListener('pointerdown', e=>{
   ac();
   dragging=true; pid=e.pointerId;
   try{ gridWrap.setPointerCapture(pid); }catch(_){}
-  path=[i]; lastPt=[e.clientX,e.clientY];
+  path=[i];
   $('#curWord').className='cur-word';
   sfx.tick(0); updatePath();
   e.preventDefault();
 });
 gridWrap.addEventListener('pointermove', e=>{
   if(!dragging || e.pointerId!==pid) return;
-  lastPt=[e.clientX,e.clientY];
   const i=cellAt(e.clientX,e.clientY,true);
   if(i>=0 && i!==path[path.length-1]){
     if(path.length>1 && i===path[path.length-2]){ path.pop(); sfx.tick(path.length-1); }
@@ -567,26 +566,79 @@ function endDrag(e){
   if(!dragging || (e && e.pointerId!==pid)) return;
   dragging=false;
   try{ gridWrap.releasePointerCapture(pid); }catch(_){}
-  const p=path.slice(); path=[]; lastPt=null;
+  const p=path.slice(); path=[];
   updatePath(true);
   submit(p);
 }
 gridWrap.addEventListener('pointerup', endDrag);
 gridWrap.addEventListener('pointercancel', endDrag);
 
-function centerOf(i){
-  const w=gridWrap.getBoundingClientRect(), r=tiles[i].getBoundingClientRect();
-  return [r.left-w.left+r.width/2, r.top-w.top+r.height/2];
-}
 function updatePath(keepWord){
   tiles.forEach((t,i)=>t.classList.toggle('sel', path.includes(i)));
-  const pts=path.map(centerOf);
-  if(dragging && lastPt && pts.length){
-    const w=gridWrap.getBoundingClientRect();
-    pts.push([lastPt[0]-w.left, lastPt[1]-w.top]);
-  }
-  $('#trailLine').setAttribute('points', pts.map(p=>p.join(',')).join(' '));
   if(!keepWord) $('#curWord').textContent = path.map(i=>L.letters[i]).join('');
+}
+
+/* ---------- 飞字动画：先在上方展示单词，再飞向词表 / 批注 ---------- */
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const SHOW_MS = 760, FLY_MS = 640, STAGGER = 55;   // 展示时长 / 飞行时长 / 字母间隔
+let flyEnd=0;   // 本次动画结束的时间（毫秒）
+function canFly(){ return !reduceMotion.matches && !!document.body.animate; }
+
+/* 把单词拆成逐个字母排在「当前单词」处，返回每个字母的位置与字号 */
+function showcase(word){
+  const c=$('#curWord');
+  c.className='cur-word'; c.style.visibility='hidden';
+  c.innerHTML=[...word].map(ch=>`<span>${ch}</span>`).join('');
+  const fs=parseFloat(getComputedStyle(c).fontSize);
+  const rects=[...c.children].map(x=>x.getBoundingClientRect());
+  c.textContent=''; c.style.visibility='';
+  return {rects, fs};
+}
+/* 一个字母：先在原地放大「印」一下并停留，再沿弧线飞到 to */
+function flyLetter(ch, from, to, fs, {delay=0, scale=.5, fade=false, cls='', done}={}){
+  const d=document.createElement('span');
+  d.className='fly'+(cls?' '+cls:''); d.textContent=ch;
+  d.style.cssText=`left:${from.left}px;top:${from.top}px;width:${from.width}px;height:${from.height}px;font-size:${fs}px`;
+  document.body.appendChild(d);
+  const dx=(to.left+to.width/2)-(from.left+from.width/2), dy=(to.top+to.height/2)-(from.top+from.height/2);
+  const lift=Math.min(80, 24+Math.abs(dx)*.1);
+  const total=SHOW_MS+FLY_MS, o=t=>t/total;
+  const a=d.animate([
+    {transform:'translate(0,0) scale(1)', offset:0},
+    {transform:'translate(0,-6px) scale(1.32)', offset:o(SHOW_MS*.28)},
+    {transform:'translate(0,0) scale(1.08)', offset:o(SHOW_MS*.55)},
+    {transform:'translate(0,0) scale(1.08)', opacity:1, offset:o(SHOW_MS)},
+    {transform:`translate(${dx*.45}px,${dy*.45-lift}px) scale(${(1.08+scale)/2}) rotate(-6deg)`, opacity:1, offset:o(SHOW_MS+FLY_MS*.45)},
+    {transform:`translate(${dx}px,${dy}px) scale(${scale})`, opacity:fade?0:1, offset:1},
+  ], {duration:total, delay, easing:'ease-in-out', fill:'both'});
+  a.onfinish=()=>{ d.remove(); done&&done(); };
+  return total+delay;
+}
+/* 目标词：展示后逐个字母落进词表空格 */
+function flyToWord(ti){
+  const w=L.words[ti], el=$(`#words .w[data-i="${ti}"]`);
+  if(!el || !canFly()){ flashWord('ok', w); refreshWord(ti, true); return 0; }
+  const {rects, fs}=showcase(w);
+  el.scrollIntoView({block:'nearest'});
+  const slots=[...el.querySelectorAll('.lt')];
+  slots.forEach(x=>{ x.classList.remove('land'); x.classList.add('pending'); });
+  let end=0;
+  slots.forEach((slot,k)=>{
+    const to=slot.getBoundingClientRect();
+    end=Math.max(end, flyLetter(w[k], rects[k], to, fs, {delay:k*STAGGER, scale:(to.width*.82)/fs, cls:'ok',
+      done:()=>{ slot.classList.remove('pending'); slot.classList.add('land'); sfx.tick(k+3); }}));
+  });
+  return end;
+}
+/* 额外单词：展示后缩小着飞进「批注」按钮 */
+function flyToExtras(word){
+  const bump=()=>{ const b=$('#extraBadge'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); };
+  const btn=$('#btnExtras svg');
+  if(!btn || !canFly()){ flashWord('extra', word); bump(); return; }
+  const {rects, fs}=showcase(word);
+  const to=btn.getBoundingClientRect();
+  rects.forEach((r,k)=>flyLetter(word[k], r, to, fs, {delay:k*STAGGER, scale:.22, fade:true, cls:'extra',
+    done: k===rects.length-1 ? bump : null}));
 }
 
 /* ---------- 判定 ---------- */
@@ -610,8 +662,8 @@ function submit(p){
     if(P.extras.includes(s)){ flashWord('dup'); toast('这条批注已经记下了'); return; }
     P.extras.push(s); addToDict(s);
     save.coins+=1; updateInk(true);
-    flashWord('extra'); sfx.extra(); toast(`额外单词 · ${s.toLowerCase()}  +1 墨水`);
-    const b=$('#extraBadge'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump');
+    sfx.extra(); toast(`额外单词 · ${s.toLowerCase()}  +1 墨水`);
+    flyToExtras(s);
     updateTools(); persist(); return;
   }
   P.mistakes++; flashWord('bad'); sfx.bad(); persist();
@@ -646,13 +698,13 @@ function acceptWord(ti, p){
   const after=closedSet(nFound());
   const opened=[...before].filter(i=>!after.has(i));
   refreshTiles(p, opened);
-  refreshWord(ti, true); updateProg();
+  refreshWord(ti, false); flyEnd=flyToWord(ti); updateProg();
   const w=L.words[ti];
   let label = EXPR[Math.min(w.length,7)];
   if(L.tiers[ti]===5) label='非常罕见的词！'; else if(L.tiers[ti]===4) label='罕见词！';
   else if(L.types[ti]===2) label='难词！'; else if(L.types[ti]===1) label='生僻词！';
   else if(w.length===Math.max(...L.words.map(x=>x.length)) && w.length>=6) label='最长单词！';
-  flashWord('ok'); sfx.found();
+  sfx.found();
   if(label) setTimeout(()=>toast(label),120);
   hideTip();
   if(opened.length){ setTimeout(()=>{ sfx.reveal(); if(!save.tips.curtOpen){ save.tips.curtOpen=1; toast('幕布揭开了！'); } },250); }
@@ -769,7 +821,7 @@ function completeLevel(){
   P.reward=reward; P.first=first;
   save.coins+=reward;
   persist();
-  setTimeout(()=>{ sfx.done(); updateInk(true); showDone(false); }, 650);
+  setTimeout(()=>{ sfx.done(); updateInk(true); showDone(false); }, Math.max(650, flyEnd+150));
 }
 function showDone(restored){
   $$('.done-card').forEach(e=>e.remove());
@@ -863,12 +915,20 @@ $('#btnInfo').onclick=()=>{ save.tips.infoOpen=!save.tips.infoOpen; persist(); r
 $('#dictQ').addEventListener('input', renderDict);
 $('#btnSettings').onclick=()=>{
   const body=document.createElement('div');
-  body.innerHTML=`<div class="set-row"><span>音效</span><button class="switch${save.sound?' on':''}" id="swSound" aria-label="音效"></button></div>
+  const curSkin=document.documentElement.getAttribute('data-skin')||'book';
+  body.innerHTML=`<div class="set-row" style="border:0;padding-bottom:2px"><span>皮肤</span></div>
+    <div class="skins">${(window.SKINS||[]).map(k=>`<button class="skin-opt${k.id===curSkin?' on':''}" data-skin="${k.id}"><i class="${k.id}">${k.icon}</i>${k.name}</button>`).join('')}</div>
+    <div class="set-row"><span>音效</span><button class="switch${save.sound?' on':''}" id="swSound" aria-label="音效"></button></div>
     ${HAS_REF?`<div class="set-row"><span>关卡来源</span><span class="seg"><button data-set="orig" class="${SET==='orig'?'on':''}">原创</button><button data-set="ref" class="${SET==='ref'?'on':''}">参考</button></span></div>`:''}
     <div class="set-row"><span>已读页数</span><b style="font-family:var(--serif-en)">${BOOKS.reduce((a,_,b)=>a+Math.min(bookProgress(b),BOOKS[b].levels.length),0)} / ${BOOKS.reduce((a,b)=>a+b.levels.length,0)}</b></div>
     <div class="set-row"><span>词典收录</span><b style="font-family:var(--serif-en)">${Object.keys(save.words).length}</b></div>
     <div style="text-align:center;margin-top:16px"><button class="text-btn" id="btnReset">清空全部进度</button></div>`;
   modal({title:'设 置', body, buttons:[{label:'完成', primary:true}]});
+  body.querySelectorAll('[data-skin]').forEach(b=>b.onclick=()=>{
+    window.applySkin(b.dataset.skin);
+    body.querySelectorAll('.skin-opt').forEach(x=>x.classList.toggle('on', x===b));
+    if(screen==='game') setTimeout(sizeGrid, 50);
+  });
   body.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{
     if(b.dataset.set===SET) return;
     persist();
