@@ -1,0 +1,71 @@
+/* ==========================================================================
+   皮肤「典藏」：在书页皮肤基础上换用 assets/ 里的位图贴图与图标。
+   图标通过 index.html 里的 #sprite-classic + syncIcons() 切换。
+   ========================================================================== */
+
+/* 书桌 */
+html[data-skin="classic"] body{
+  background:#22170f url("assets/texture-desk.jpg") center/512px repeat;
+  box-shadow:inset 0 0 180px rgba(0,0,0,.55);
+}
+
+/* 纸张：书页、目录页、弹窗、按钮牌 */
+html[data-skin="classic"] .paper,
+html[data-skin="classic"] .sheet,
+html[data-skin="classic"] .book,
+html[data-skin="classic"] .modal-card,
+html[data-skin="classic"] .plate,
+html[data-skin="classic"] .toast,
+html[data-skin="classic"] .tip{
+  background-image:url("assets/texture-paper.jpg");background-size:256px;
+}
+html[data-skin="classic"] .done-card{
+  background-image:linear-gradient(rgba(243,234,214,.6),rgba(243,234,214,.6)),url("assets/texture-paper.jpg");background-size:auto,256px;
+}
+
+/* 封面：整张封面图自带金色边框，隐藏 CSS 画的边框 */
+html[data-skin="classic"] .cover{
+  background:#3d1210 url("assets/book-cover.jpg") center/cover no-repeat;
+}
+html[data-skin="classic"] .cover::before{display:none}
+html[data-skin="classic"] .cover-frame{border-color:transparent;outline-color:transparent}
+html[data-skin="classic"] .cover-foot{padding-left:18%;padding-right:18%}
+
+/* 字砖：底图带透明边距，铺满方块后去掉 CSS 阴影 */
+html[data-skin="classic"] .tile{
+  background:url("assets/tile-normal.png") center/100% 100% no-repeat;
+  box-shadow:none;border-radius:calc(var(--tile)*.1);
+}
+html[data-skin="classic"] .tile.sel{
+  background-image:url("assets/tile-selected.png");box-shadow:none;
+}
+html[data-skin="classic"] .tile.curt{
+  background:url("assets/tile-curtain.png") center/100% 100% no-repeat;box-shadow:none;
+}
+html[data-skin="classic"] .tile.spent{background:transparent}
+
+/* 「提示 / 烟花」做成火漆印 */
+html[data-skin="classic"] #btnHint svg,
+html[data-skin="classic"] #btnFire svg{
+  color:#f3dc9c;border:0;outline:0;
+  background:url("assets/seal-base.png") center/100% 100% no-repeat;
+  filter:drop-shadow(0 2px 2px rgba(60,20,10,.35));
+}
+
+/* 完成页印章 */
+html[data-skin="classic"] .done-card .seal{
+  border:0;background:url("assets/seal-complete.png") center/100% 100% no-repeat;
+  width:96px;height:96px;
+}
+@media (max-width: 820px){
+  html[data-skin="classic"] .done-card .seal{width:76px;height:76px}
+}
+
+/* 花饰（新图形是 64×24 比例） */
+html[data-skin="classic"] .fleuron{width:72px;height:27px}
+
+/* 难词星标 */
+html[data-skin="classic"] .w .mark.hard{
+  font-size:0;width:11px;height:11px;top:-2px;background:var(--red);
+  -webkit-mask:url("assets/star-hard.svg") center/contain no-repeat;mask:url("assets/star-hard.svg") center/contain no-repeat;
+}

@@ -1,0 +1,215 @@
+[
+  {
+    "file": "app-icon-1024.png",
+    "width": 1024,
+    "height": 1024,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "app-icon-180.png",
+    "width": 180,
+    "height": 180,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "app-icon-192.png",
+    "width": 192,
+    "height": 192,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "app-icon-32.png",
+    "width": 32,
+    "height": 32,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "app-icon-512.png",
+    "width": 512,
+    "height": 512,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "book-cover.png",
+    "width": 1320,
+    "height": 1920,
+    "mode": "RGB",
+    "alpha_range": null
+  },
+  {
+    "file": "fleuron.png",
+    "width": 384,
+    "height": 96,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "fleuron.svg",
+    "viewBox": "0 0 64 24",
+    "format": "SVG"
+  },
+  {
+    "file": "i-book.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "i-close.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "i-drop-color.png",
+    "width": 144,
+    "height": 144,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "i-drop-color.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "i-drop.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "i-feather.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "i-gear.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "i-lock.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "i-notes.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "i-spark.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "i-undo.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "icons-sprite.svg",
+    "viewBox": null,
+    "format": "SVG"
+  },
+  {
+    "file": "seal-base.png",
+    "width": 138,
+    "height": 138,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "seal-complete.png",
+    "width": 600,
+    "height": 600,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "star-hard.svg",
+    "viewBox": "0 0 24 24",
+    "format": "SVG"
+  },
+  {
+    "file": "texture-desk.png",
+    "width": 1024,
+    "height": 1024,
+    "mode": "RGB",
+    "alpha_range": null
+  },
+  {
+    "file": "texture-leather.png",
+    "width": 512,
+    "height": 512,
+    "mode": "RGB",
+    "alpha_range": null
+  },
+  {
+    "file": "texture-paper.png",
+    "width": 512,
+    "height": 512,
+    "mode": "RGB",
+    "alpha_range": null
+  },
+  {
+    "file": "tile-curtain.png",
+    "width": 288,
+    "height": 288,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "tile-normal.png",
+    "width": 288,
+    "height": 288,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  },
+  {
+    "file": "tile-selected.png",
+    "width": 288,
+    "height": 288,
+    "mode": "RGBA",
+    "alpha_range": [
+      0,
+      255
+    ]
+  }
+]

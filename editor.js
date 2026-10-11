@@ -6,8 +6,8 @@ const WP = window.WP;
 const STORE = 'wordpages.editor';
 const MIN_W = 2, MAX_W = 6, MIN_H = 2, MAX_H = 5;
 const TIER = window.TIER || {};
-const TIER_NAMES = ['', '非常常用', '常用', '一般', '罕见', '非常罕见'];
-const tierTag = w => TIER[w] ? `<em class="tier t${TIER[w]}">${TIER_NAMES[TIER[w]]}</em>` : '';
+const tierName = k => t('tiers')[k];
+const tierTag = w => TIER[w] ? `<em class="tier t${TIER[w]}">${tierName(TIER[w])}</em>` : '';
 
 /* ---------- 存储 ---------- */
 function blank(W = 4, H = 3){
@@ -158,12 +158,12 @@ function buildGrid(){
   gridEl.style.setProperty('--cols', D.W);
   gridEl.classList.toggle('paint', mode !== 'letter');
   for(let i = 0; i < N(); i++){
-    const t = document.createElement('div'); t.className = 'ed-tile'; t.dataset.i = i;
-    t.innerHTML = `<input maxlength="2" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="第 ${i + 1} 格"><span class="cnt"></span>`;
-    const inp = t.querySelector('input');
+    const cell = document.createElement('div'); cell.className = 'ed-tile'; cell.dataset.i = i;
+    cell.innerHTML = `<input maxlength="2" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="${t('ed.cell', i + 1)}"><span class="cnt"></span>`;
+    const inp = cell.querySelector('input');
     inp.value = D.letters[i];
     inp.readOnly = mode !== 'letter';
-    gridEl.appendChild(t);
+    gridEl.appendChild(cell);
   }
 }
 function refresh(){
@@ -185,27 +185,27 @@ function refresh(){
   $('#edWordCount').textContent = D.words.length;
   $('#edWords').innerHTML = D.words.length ? D.words.map(w => {
     const n = (A.paths[w] || []).length;
-    return `<span class="chip${n ? '' : ' bad'}">${w}${tierTag(w)}<em>${n ? (n > 1 ? n + ' 条路线' : '') : '连不出'}</em><button class="x" data-del="${w}" aria-label="删除">×</button></span>`;
-  }).join('') : '<span class="none">还没有单词</span>';
+    return `<span class="chip${n ? '' : ' bad'}">${w}${tierTag(w)}<em>${n ? (n > 1 ? t('ed.routes', n) : '') : t('ed.noRoute')}</em><button class="x" data-del="${w}" aria-label="${t('aria.delete')}">×</button></span>`;
+  }).join('') : `<span class="none">${t('ed.noWords')}</span>`;
   $('#edExtraCount').textContent = D.extras.length;
-  $('#edExtras').innerHTML = D.extras.length ? D.extras.map(w => `<span class="chip">${w}<button class="x" data-delx="${w}" aria-label="删除">×</button></span>`).join('') : '<span class="none">可选：词表以外也算对的单词</span>';
+  $('#edExtras').innerHTML = D.extras.length ? D.extras.map(w => `<span class="chip">${w}<button class="x" data-delx="${w}" aria-label="${t('aria.delete')}">×</button></span>`).join('') : `<span class="none">${t('ed.extrasHint')}</span>`;
   renderSugg();
   // 检查项
   const items = [];
-  items.push([A.empty === 0, A.empty ? `还有 ${A.empty} 个空格没填字母` : '所有格子都填好了字母']);
+  items.push([A.empty === 0, A.empty ? t('ed.chk.empty', A.empty) : t('ed.chk.filled')]);
   items.push([D.words.length >= 1 && !(A.bad || []).length,
-    !D.words.length ? '至少添加 1 个单词' : ((A.bad || []).length ? `连不出：${A.bad.join('、')}` : `${D.words.length} 个单词都能连出来`)]);
+    !D.words.length ? t('ed.chk.needWord') : ((A.bad || []).length ? t('ed.chk.bad', A.bad) : t('ed.chk.allOk', D.words.length))]);
   const ready = A.empty === 0 && D.words.length && !(A.bad || []).length;
   if(ready){
-    if(A.uncovered.length) items.push([false, `有 ${A.uncovered.length} 个格子没有被任何单词用到（已标红）`]);
-    else if(A.counts) items.push([true, '每个格子都会被用到，已算出使用次数']);
-    else items.push([false, A.fail === 'curtain' ? '幕布无法按顺序揭开：减少「揭开需」的词数，或让更多单词避开幕布'
-      : (A.fail === 'timeout' ? '组合太多，没能算完：试着减少一些单词' : '找不到让每个格子都被用到的路线组合')]);
+    if(A.uncovered.length) items.push([false, t('ed.chk.uncovered', A.uncovered.length)]);
+    else if(A.counts) items.push([true, t('ed.chk.counts')]);
+    else items.push([false, A.fail === 'curtain' ? t('ed.chk.curtain')
+      : (A.fail === 'timeout' ? t('ed.chk.timeout') : t('ed.chk.noCombo'))]);
   }
   const curt = D.curtains.map((c, k) => [c, k]).filter(([c]) => c.cells.length);
   curt.forEach(([c, k]) => {
     const tooMany = c.req >= D.words.length;
-    items.push([!tooMany, `幕布 ${'AB'[k]}：${c.cells.length} 格，找到 ${c.req} 个单词后揭开${tooMany ? '（词数不能 ≥ 单词总数）' : ''}`]);
+    items.push([!tooMany, t('ed.chk.curt', 'AB'[k], c.cells.length, c.req, tooMany)]);
   });
   $('#edStatus').innerHTML = items.map(([ok, s]) => `<li class="${ok ? 'ok' : 'bad'}">${s}</li>`).join('') + statsHtml();
   $('#edPlay').disabled = !playable();
@@ -226,13 +226,13 @@ function statsHtml(){
   const sel = [0, 0, 0, 0, 0, 0]; A.counts.forEach(c => { if(c >= 2) sel[Math.min(c, 5)]++; });
   const tiers = [0, 0, 0, 0, 0, 0]; words.forEach(w => tiers[TIER[w] || 0]++);
   const extras = new Set(D.extras); (suggCache || []).forEach(w => { if(!D.words.includes(w)) extras.add(w); });
-  const tierStr = [1, 2, 3, 4, 5].filter(t => tiers[t]).map(t => `<span class="tier t${t}">${TIER_NAMES[t]} ${tiers[t]}（${Math.round(100 * tiers[t] / n)}%）</span>`).join('')
-    + (tiers[0] ? `<span class="tier">未分级 ${tiers[0]}</span>` : '');
+  const tierStr = [1, 2, 3, 4, 5].filter(k => tiers[k]).map(k => `<span class="tier t${k}">${tierName(k)} ${t('ed.pct', tiers[k], Math.round(100 * tiers[k] / n))}</span>`).join('')
+    + (tiers[0] ? `<span class="tier">${t('tier.none')} ${tiers[0]}</span>` : '');
   return `<li class="stats"><div class="info-tiers">${tierStr}</div><dl>
-    <dt>非目标单词</dt><dd>${extras.size}</dd>
-    <dt>倒序单词</dt><dd>${rev} / ${n}（${Math.round(100 * rev / n)}%）</dd>
-    <dt>多选字砖</dt><dd>2选 ${sel[2]} · 3选 ${sel[3]} · 4选 ${sel[4]} · 5选+ ${sel[5]}</dd>
-    <dt>直线单词</dt><dd>${straight}</dd><dt>一拐单词</dt><dd>${one}</dd><dt>多拐单词</dt><dd>${multi}</dd>
+    <dt>${t('info.extras')}</dt><dd>${extras.size}</dd>
+    <dt>${t('info.rev')}</dt><dd>${t('info.pct', rev, n, Math.round(100 * rev / n) + '%')}</dd>
+    <dt>${t('info.multi')}</dt><dd>${t('info.multiVal', sel)}</dd>
+    <dt>${t('info.straight')}</dt><dd>${straight}</dd><dt>${t('info.oneTurn')}</dt><dd>${one}</dd><dt>${t('info.multiTurn')}</dt><dd>${multi}</dd>
   </dl></li>`;
 }
 function playable(){ return !!(A && A.counts) && D.curtains.every(c => !c.cells.length || c.req < D.words.length); }
@@ -242,7 +242,7 @@ function renderSugg(){
   const s = suggCache.filter(w => !D.words.includes(w) && !D.extras.includes(w))
     .sort((a, b) => b.length - a.length || a.localeCompare(b));
   $('#edSugg').innerHTML = s.length ? s.slice(0, 80).map(w => `<button class="chip" data-add="${w}">${w}${tierTag(w)}</button>`).join('')
-    : `<span class="none">${D.letters.some(Boolean) ? '没有找到更多单词' : '先在左边填入字母'}</span>`;
+    : `<span class="none">${D.letters.some(Boolean) ? t('ed.noMore') : t('ed.fillFirst')}</span>`;
 }
 function changed(letters){
   if(letters) suggCache = null;
@@ -253,11 +253,11 @@ function renderSaved(){
   $('#edSavedCount').textContent = store.saved.length;
   $('#edSaved').innerHTML = store.saved.length ? store.saved.map((l, k) => `
     <div class="ed-item${l.id === D.id ? ' cur' : ''}">
-      <span class="nm">${esc(l.name || '未命名')}<small>${l.g.replace(/,/g, ' / ')}</small></span>
-      <button class="text-btn" data-load="${k}">编辑</button>
-      <button class="text-btn" data-play="${k}">试玩</button>
-      <button class="text-btn" data-rm="${k}">删除</button>
-    </div>`).join('') : '<span class="none" style="font-size:13px;color:var(--ink-faint)">保存的关卡会出现在这里</span>';
+      <span class="nm">${esc(l.name || t('ed.untitled'))}<small>${l.g.replace(/,/g, ' / ')}</small></span>
+      <button class="text-btn" data-load="${k}">${t('ed.edit')}</button>
+      <button class="text-btn" data-play="${k}">${t('ed.try')}</button>
+      <button class="text-btn" data-rm="${k}">${t('ed.del')}</button>
+    </div>`).join('') : `<span class="none" style="font-size:13px;color:var(--ink-faint)">${t('ed.savedEmpty')}</span>`;
 }
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -321,8 +321,8 @@ $('#edName').addEventListener('input', e => { D.name = e.target.value; persist()
 /* ---------- 交互：单词 ---------- */
 function addWord(raw, extra){
   const w = String(raw).toUpperCase().replace(/[^A-Z]/g, '');
-  if(w.length < 3){ WP.toast('单词至少 3 个字母'); return false; }
-  if(D.words.includes(w) || D.extras.includes(w)){ WP.toast('已经添加过了'); return false; }
+  if(w.length < 3){ WP.toast(t('ed.min3')); return false; }
+  if(D.words.includes(w) || D.extras.includes(w)){ WP.toast(t('ed.dup')); return false; }
   (extra ? D.extras : D.words).push(w);
   changed(false); refresh();
   return true;
@@ -335,43 +335,43 @@ $('#edAddForm').addEventListener('submit', e => {
 $('#edWords').addEventListener('click', e => { const w = e.target.dataset.del; if(w){ D.words = D.words.filter(x => x !== w); changed(false); refresh(); } });
 $('#edExtras').addEventListener('click', e => { const w = e.target.dataset.delx; if(w){ D.extras = D.extras.filter(x => x !== w); changed(false); refresh(); } });
 $('#edSugg').addEventListener('click', e => { const w = e.target.dataset.add; if(w) addWord(w); });
-$('#edScan').onclick = () => { suggCache = null; refresh(); WP.toast('已重新查找'); };
+$('#edScan').onclick = () => { suggCache = null; refresh(); WP.toast(t('ed.rescanned')); };
 $('#edAllExtra').onclick = () => {
   const s = (suggCache || scanWords()).filter(w => !D.words.includes(w) && !D.extras.includes(w));
-  if(!s.length){ WP.toast('没有剩下的单词了'); return; }
+  if(!s.length){ WP.toast(t('ed.noneLeft')); return; }
   D.extras.push(...s); changed(false); refresh();
 };
 
 /* ---------- 交互：试玩 / 保存 / 导入导出 ---------- */
-function current(){ if(!playable()){ WP.toast('关卡还不完整，请先看左下方的检查项'); return null; } return toLevel(A); }
+function current(){ if(!playable()){ WP.toast(t('ed.incomplete')); return null; } return toLevel(A); }
 $('#edPlay').onclick = () => { const lv = current(); if(lv) WP.playCustom(lv); };
 $('#edSave').onclick = () => {
   const lv = current(); if(!lv) return;
   D.id = lv.id;
   const k = store.saved.findIndex(x => x.id === lv.id);
   if(k >= 0) store.saved[k] = lv; else store.saved.unshift(lv);
-  persist(); renderSaved(); WP.toast('已保存到「我的关卡」');
+  persist(); renderSaved(); WP.toast(t('ed.saved'));
 };
 $('#edNew').onclick = () => {
-  WP.modal({title: '新建关卡', body: '<p style="margin:0;text-align:center">当前未保存的修改将被清空。</p>',
-    buttons: [{label: '取消'}, {label: '新建', primary: true, onClick: () => { store.draft = D = blank(D.W, D.H); suggCache = null; mode = 'letter'; persist(); render(); }}]});
+  WP.modal({title: t('ed.newTitle'), body: `<p style="margin:0;text-align:center">${t('ed.newBody')}</p>`,
+    buttons: [{label: t('cancel')}, {label: t('ed.new'), primary: true, onClick: () => { store.draft = D = blank(D.W, D.H); suggCache = null; mode = 'letter'; persist(); render(); }}]});
 };
 $('#edExport').onclick = () => {
   const lv = current(); if(!lv) return;
   const ta = document.createElement('textarea'); ta.className = 'ed-io'; ta.readOnly = true; ta.value = JSON.stringify(lv);
   const body = document.createElement('div');
-  body.innerHTML = '<p style="margin:0 0 8px;font-size:13px">关卡数据（与游戏内置关卡格式相同，可分享给别人导入）：</p>';
+  body.innerHTML = `<p style="margin:0 0 8px;font-size:13px">${t('ed.exportBody')}</p>`;
   body.appendChild(ta);
-  WP.modal({title: '导出关卡', body, buttons: [{label: '关闭'}, {label: '复制', primary: true, onClick: () => {
-    (navigator.clipboard ? navigator.clipboard.writeText(ta.value) : Promise.reject()).then(() => WP.toast('已复制'), () => { ta.select(); document.execCommand('copy'); WP.toast('已复制'); });
+  WP.modal({title: t('ed.exportTitle'), body, buttons: [{label: t('ed.close')}, {label: t('ed.copy'), primary: true, onClick: () => {
+    (navigator.clipboard ? navigator.clipboard.writeText(ta.value) : Promise.reject()).then(() => WP.toast(t('ed.copied')), () => { ta.select(); document.execCommand('copy'); WP.toast(t('ed.copied')); });
   }}]});
   setTimeout(() => ta.select(), 50);
 };
 $('#edImport').onclick = () => {
   const ta = document.createElement('textarea'); ta.className = 'ed-io';
-  ta.placeholder = '粘贴导出的关卡 JSON，例如 {"g":"DTY,ARM","t":"ARM ART ARMY DART",...}';
+  ta.placeholder = t('ed.importPh');
   const body = document.createElement('div'); body.appendChild(ta);
-  WP.modal({title: '导入关卡', body, buttons: [{label: '取消'}, {label: '导入', primary: true, onClick: () => {
+  WP.modal({title: t('ed.importTitle'), body, buttons: [{label: t('cancel')}, {label: t('ed.import'), primary: true, onClick: () => {
     try{
       let v = JSON.parse(ta.value.trim());
       if(Array.isArray(v)) v = v[0];
@@ -380,8 +380,8 @@ $('#edImport').onclick = () => {
       if(rows.some(r => r.length !== rows[0].length) || rows[0].length > MAX_W || rows.length > MAX_H) throw 0;
       v.id = null;
       store.draft = D = fromLevel(v); suggCache = null; mode = 'letter'; persist(); render();
-      WP.toast('已导入');
-    }catch(e){ WP.toast('无法识别这段关卡数据'); }
+      WP.toast(t('ed.imported'));
+    }catch(e){ WP.toast(t('ed.importBad')); }
   }}]});
   setTimeout(() => ta.focus(), 50);
 };
@@ -391,8 +391,8 @@ $('#edSaved').addEventListener('click', e => {
   if(b.dataset.play != null) WP.playCustom(store.saved[+b.dataset.play]);
   if(b.dataset.rm != null){
     const k = +b.dataset.rm, lv = store.saved[k];
-    WP.modal({title: '删除关卡？', body: `<p style="margin:0;text-align:center">《${esc(lv.name || '未命名')}》将被删除，无法恢复。</p>`,
-      buttons: [{label: '取消'}, {label: '删除', primary: true, onClick: () => { store.saved.splice(k, 1); if(D.id === lv.id) D.id = null; persist(); renderSaved(); }}]});
+    WP.modal({title: t('ed.rmTitle'), body: `<p style="margin:0;text-align:center">${t('ed.rmBody', esc(lv.name || t('ed.untitled')))}</p>`,
+      buttons: [{label: t('cancel')}, {label: t('ed.del'), primary: true, onClick: () => { store.saved.splice(k, 1); if(D.id === lv.id) D.id = null; persist(); renderSaved(); }}]});
   }
 });
 

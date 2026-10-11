@@ -1,0 +1,33 @@
+{
+  "method": "Built-in image_gen; SVG icons authored as vectors; sizing exported with sips",
+  "assets": [
+    {
+      "name": "texture-paper.png",
+      "prompt": "Use case: stylized-concept. Game asset: seamless tileable aged parchment paper texture, square, flat scan, uniform warm cream #f3ead6, subtle long paper fibers and fine speckles, antique book aesthetic. Even lighting all the way to edges. No stains, folds, borders, objects, text, watermark, shadows or vignette. Opposite edges must tile seamlessly. Full bleed."
+    },
+    {
+      "name": "texture-leather.png",
+      "prompt": "Game asset, stylized-concept: seamless tileable oxblood leather texture, fine small leather grain, deep burgundy #5a1f1b, antique leather bound book, square full bleed flat top-down material scan, even soft illumination. No seams, borders, objects, text, shadows, vignette. Match opposite edges seamlessly."
+    },
+    {
+      "name": "texture-desk.png",
+      "prompt": "Game asset, stylized-concept: seamless tileable dark walnut wood desk texture, warm dark brown #3a281c to #22170f, subtle elegant wood grain running vertically, full bleed square flat top-down scan, even soft light, quiet literary reading room. No objects, text, borders, planks gaps or vignette. Opposite edges seamless."
+    },
+    {
+      "name": "book-cover.png",
+      "prompt": "Game asset, stylized-concept: antique leather-bound book front cover, flat orthographic top-down view, portrait aspect 11:16. Oxblood leather #5a1f1b to #3d1210, fine grain. Gold foil double thin line border inset 7 percent, elegant restrained engraved botanical corner flourishes in #b08a3e and highlights #e2c37a. Completely empty center occupying middle 70 percent for later code-rendered title and buttons. Cover fills full image rectangle, no perspective, no book thickness, no outside scene, no letters, no text, no logo or watermark. Quiet literary warm antique style."
+    },
+    {
+      "name": "app-icon-1024.png",
+      "prompt": "Game app icon, logo-brand. Square 1024 icon, rounded square oxblood leather #5a1f1b background with restrained thin gold foil edge #b08a3e. One single centered ivory cream letterpress letter tile #f8f1e1, gently rounded square, serif capital letter \"A\" in dark ink #2b2118. Minimal elegant antique leather-bound book aesthetic, literary cozy, readable silhouette even small. Orthographic front view. Only exact single letter A, no other text, no watermark. Transparent outside rounded square."
+    },
+    {
+      "name": "seal-complete.png",
+      "prompt": "Game asset stylized-concept: round vermilion Chinese ink seal stamp impression, top down flat ink mark, slightly uneven worn ink #9b2c22, double concentric circular ring border with restrained tiny broken fleuron ornaments at four cardinal points. Completely empty center for code to add text, no characters or text. Circle occupies 90 percent of square canvas. True transparent background, no paper backdrop, no wax, no object shadows."
+    },
+    {
+      "name": "seal-base.png",
+      "prompt": "Game asset stylized-concept: circular deep oxblood red wax seal stamp base #5a1f1b, orthographic top down, embossed double ring border, empty flat center for later overlay of a line icon. Restrained antique leather-bound book style. Round balanced symmetrical shape with lightly organic wax edge, circle occupies 90 percent of square canvas. Subtle short shadow contained in transparent margins. True transparent background. No letters, no symbols, no text, no watermark."
+    }
+  ]
+}

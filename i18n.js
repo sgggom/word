@@ -1,0 +1,499 @@
+/* 多语言：中文 / English。
+   静态文案用 data-i18n（文本）/ data-i18n-html / data-i18n-ph（placeholder）/ data-i18n-aria / data-i18n-title 标记，
+   动态文案用 t(key, ...args)；{0} {1} 为参数，值为函数时直接调用，数组原样返回。 */
+(function(){
+'use strict';
+
+function cnum(n){
+  const d='零一二三四五六七八九';
+  if(n<10) return d[n];
+  if(n<20) return '十'+(n%10?d[n%10]:'');
+  if(n<100) return d[Math.floor(n/10)]+'十'+(n%10?d[n%10]:'');
+  const h=Math.floor(n/100), r=n%100;
+  return d[h]+'百'+(r===0?'':(r<10?'零'+d[r]:(r<20?'一'+cnum(r):cnum(r))));
+}
+const EN_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+const STR = {
+zh: {
+  'doc.title':'字页 · Word Pages',
+  'doc.desc':'书页风格的单词连线谜题：上下左右滑动字母，用尽每一块字砖。',
+  'lang.name':'中文',
+
+  /* 封面 */
+  'cover.title':'字&nbsp;页',
+  'cover.sub':'WORD&nbsp;&nbsp;TILES',
+  'cover.tag':'一本关于字母的安静小书',
+  'cover.tagRef':'参考关卡 · 仅在本地可用',
+  'cover.continue':'继续阅读',
+  'cover.toc':'目 录',
+  'cover.daily':'每日一页',
+  'cover.dict':'我的词典',
+  'aria.settings':'设置',
+  'aria.back':'返回',
+  'aria.toc':'目录',
+  'aria.delete':'删除',
+
+  /* 册 / 章 / 页 */
+  'book.name':(b,name)=>name,
+  'book.sub':(b,sub)=>sub,
+  'book.ref':'参考关卡',
+  'chapter':k=>`第${cnum(k+1)}章`,
+  'chapter.names':['晨光','旧书店','雨巷','墨痕','远行','灯下','潮汐','林间','信笺','星图',
+    '归途','炉火','渡口','钟声','纸鸢','雪夜','长廊','花信','山居','旧梦','海风','月台','茶事','鹿鸣'],
+  'page':n=>`第 ${n} 页`,
+  'cont.sub':(name,sub,ch,pg)=>`${name?name+'·'+sub+' · ':''}第${cnum(ch+1)}章 · 第 ${pg} 页`,
+  'tiers':['','非常常用','常用','一般','罕见','非常罕见'],
+  'tier.none':'未分级',
+
+  /* 目录 */
+  'toc.title':'目&nbsp;&nbsp;录',
+  'toc.locked':'完成前面的章节后解锁',
+
+  /* 每日一页 */
+  'daily.title':'每日一页',
+  'daily.month':d=>`${d.getFullYear()} 年 ${d.getMonth()+1} 月`,
+  'daily.week':d=>'星期'+'日一二三四五六'[d.getDay()],
+  'daily.strip':'一二三四五六日',
+  'daily.streak':'连续天数',
+  'daily.total':'累计完成',
+  'daily.play':'翻开今日一页',
+  'daily.replay':'重读今日一页',
+  'daily.chap':d=>`每日一页 · ${d.getMonth()+1}月${d.getDate()}日`,
+  'daily.lvl':'今日一页',
+
+  /* 词典 */
+  'dict.title':'我的词典',
+  'dict.search':'查找已收录的单词…',
+  'dict.count':n=>`${n} 词`,
+  'dict.noMatch':'没有找到匹配的单词',
+  'dict.empty':'找到新单词后，它们的释义会收录在这里。',
+  'dict.more':n=>`…还有 ${n} 个，请用搜索查找`,
+  'def.none':'（暂无释义）',
+  'def.noneWord':'（此词暂无释义）',
+  'def.sep':'；',
+
+  /* 游戏页 */
+  'game.words':'词&nbsp;表',
+  'game.info':'本页信息',
+  'game.editTitle':'关卡编辑器 · 试玩',
+  'game.custom':'自制关卡',
+  'game.customName':n=>`《${n}》`,
+  'tool.undo':'撤回',
+  'tool.notes':'批注',
+  'tool.notesAria':'页边批注',
+  'tool.hint':'提示',
+  'tool.fire':'烟花',
+  'mark.hard':'难词',
+  'mark.rare':'生僻词',
+
+  /* 本页信息 */
+  'info.extras':'非目标单词',
+  'info.rev':'倒序单词',
+  'info.multi':'多选字砖',
+  'info.multiVal':m=>`2选 ${m[2]} · 3选 ${m[3]} · 4选 ${m[4]} · 5选+ ${m[5]}`,
+  'info.straight':'直线单词',
+  'info.oneTurn':'一拐单词',
+  'info.multiTurn':'多拐单词',
+  'info.pct':(a,b,p)=>`${a} / ${b}（${p}）`,
+
+  /* 判定 */
+  'toast.later':'这个词稍后再写，先找找别的单词吧',
+  'toast.dupWord':'这个词已经写进词表了',
+  'toast.dupExtra':'这条批注已经记下了',
+  'toast.extra':w=>`额外单词 · ${w}  +1 墨水`,
+  'toast.curtain':'幕布揭开了！',
+  'toast.noInk':n=>`墨水不足（需要 ${n}）`,
+  'toast.fire':n=>`烟花点亮了 ${n} 个字母`,
+  'expr':['','','','不错！','很好！','完美！','精彩！','难以置信！'],
+  'label.t5':'非常罕见的词！',
+  'label.t4':'罕见词！',
+  'label.hard':'难词！',
+  'label.rare':'生僻词！',
+  'label.longest':'最长单词！',
+
+  /* 死局 */
+  'fail.title':'墨迹已干',
+  'fail.body':'剩下的单词已经无法用现有的字砖拼出了。<br>试着撤回上一个词，换一条路径吧。',
+  'fail.restart':'重写本页',
+  'fail.undo':'撤回上一词',
+
+  /* 批注 */
+  'extras.title':'页边批注',
+  'extras.found':(a,b)=>`本页额外单词：已找到 <b>${a}</b> / ${b}`,
+  'extras.note':'额外单词不计入词表，每找到一个获得 1 滴墨水。',
+  'extras.empty':'还没有批注。试试拼出词表以外的单词？',
+  'extras.close':'合上',
+
+  /* 教学提示 */
+  'tip.swipe':'沿着字母上下左右滑动，拼出词表里的单词',
+  'tip.count':'红色小数字是字砖剩余的使用次数，用完就会消失',
+  'tip.back':'单词也可以从右往左、从下往上地滑',
+  'tip.hint':'卡住了？用「提示」揭示一个字母，并点亮它所在的字砖',
+  'tip.curt':'被幕布盖住的字砖，要先找到圆圈里所示数量的单词才会揭开',
+
+  /* 完成 */
+  'msg.generic':['这一页完全难不倒你！','像真正的文字大师一样解开了！','行云流水！\n继续保持！','干净利落，翻到下一页吧！','纯粹的文字魔法！'],
+  'msg.perfect':['完美无瑕！\n一次都没有猜错！','零失误，漂亮的一页！','一笔未错，堪称大师！'],
+  'msg.bonus':['势不可挡！\n找到了 {0} 个额外单词！','手感火热！\n额外单词已有 {0} 个！','词如泉涌！\n{0} 个额外单词收入囊中！'],
+  'msg.chapter':ch=>`${ch}，读完了！\n下一章正在等你。`,
+  'done.edit':'试玩通过',
+  'done.daily':'今日已读',
+  'done.words':'词表单词',
+  'done.extras':'额外单词',
+  'done.ink':'墨水',
+  'done.perfect':'完美',
+  'done.read':'阅毕',
+  'done.backEditor':'返回编辑器',
+  'done.closeDiary':'合上日记',
+  'done.next':'翻到下一页 →',
+  'done.toc':'回到目录',
+
+  /* 设置 */
+  'set.title':'设 置',
+  'set.lang':'语言',
+  'set.skin':'皮肤',
+  'set.sound':'音效',
+  'set.source':'关卡来源',
+  'set.orig':'原创',
+  'set.ref':'参考',
+  'set.read':'已读页数',
+  'set.dict':'词典收录',
+  'set.reset':'清空全部进度',
+  'set.done':'完成',
+  'reset.title':'清空进度？',
+  'reset.body':'所有已读页数、墨水与词典都会被清除，且无法恢复。',
+  'reset.ok':'清空',
+  'reset.toast':'已清空',
+  'cancel':'取消',
+  'skin.book':'书页', 'skin.classic':'典藏', 'skin.typewriter':'复古打字机',
+  'skin.keyboard':'键盘', 'skin.glass':'液态玻璃', 'skin.cartoon':'卡通',
+
+  /* 关卡编辑器 */
+  'ed.title':'关卡编辑器',
+  'ed.esc':'Esc 返回',
+  'ed.size':'尺寸',
+  'ed.w':'宽',
+  'ed.h':'高',
+  'ed.brush':'画笔',
+  'ed.letter':'字母',
+  'ed.curtA':'幕布 A',
+  'ed.curtB':'幕布 B',
+  'ed.req1':'揭开需',
+  'ed.req2':'词',
+  'ed.random':'随机补全空格',
+  'ed.clear':'清空字母',
+  'ed.name':'给这一页起个名字（可选）',
+  'ed.words':'词&nbsp;表',
+  'ed.wordIn':'输入单词，回车添加',
+  'ed.add':'添加',
+  'ed.onBoard':'盘面中的单词',
+  'ed.rescan':'重新查找',
+  'ed.clickAdd':'点击加入词表；',
+  'ed.allExtra':'把剩下的都设为额外单词',
+  'ed.extras':'额外单词',
+  'ed.play':'试 玩',
+  'ed.save':'保 存',
+  'ed.new':'新建',
+  'ed.export':'导出',
+  'ed.import':'导入',
+  'ed.mine':'我的关卡',
+  'ed.cell':n=>`第 ${n} 格`,
+  'ed.routes':n=>`${n} 条路线`,
+  'ed.noRoute':'连不出',
+  'ed.noWords':'还没有单词',
+  'ed.extrasHint':'可选：词表以外也算对的单词',
+  'ed.chk.empty':n=>`还有 ${n} 个空格没填字母`,
+  'ed.chk.filled':'所有格子都填好了字母',
+  'ed.chk.needWord':'至少添加 1 个单词',
+  'ed.chk.bad':list=>`连不出：${list.join('、')}`,
+  'ed.chk.allOk':n=>`${n} 个单词都能连出来`,
+  'ed.chk.uncovered':n=>`有 ${n} 个格子没有被任何单词用到（已标红）`,
+  'ed.chk.counts':'每个格子都会被用到，已算出使用次数',
+  'ed.chk.curtain':'幕布无法按顺序揭开：减少「揭开需」的词数，或让更多单词避开幕布',
+  'ed.chk.timeout':'组合太多，没能算完：试着减少一些单词',
+  'ed.chk.noCombo':'找不到让每个格子都被用到的路线组合',
+  'ed.chk.curt':(k,cells,req,tooMany)=>`幕布 ${k}：${cells} 格，找到 ${req} 个单词后揭开${tooMany?'（词数不能 ≥ 单词总数）':''}`,
+  'ed.pct':(n,p)=>`${n}（${p}%）`,
+  'ed.noMore':'没有找到更多单词',
+  'ed.fillFirst':'先在左边填入字母',
+  'ed.untitled':'未命名',
+  'ed.edit':'编辑',
+  'ed.try':'试玩',
+  'ed.del':'删除',
+  'ed.savedEmpty':'保存的关卡会出现在这里',
+  'ed.min3':'单词至少 3 个字母',
+  'ed.dup':'已经添加过了',
+  'ed.rescanned':'已重新查找',
+  'ed.noneLeft':'没有剩下的单词了',
+  'ed.incomplete':'关卡还不完整，请先看左下方的检查项',
+  'ed.saved':'已保存到「我的关卡」',
+  'ed.newTitle':'新建关卡',
+  'ed.newBody':'当前未保存的修改将被清空。',
+  'ed.exportTitle':'导出关卡',
+  'ed.exportBody':'关卡数据（与游戏内置关卡格式相同，可分享给别人导入）：',
+  'ed.close':'关闭',
+  'ed.copy':'复制',
+  'ed.copied':'已复制',
+  'ed.importTitle':'导入关卡',
+  'ed.importPh':'粘贴导出的关卡 JSON，例如 {"g":"DTY,ARM","t":"ARM ART ARMY DART",...}',
+  'ed.imported':'已导入',
+  'ed.importBad':'无法识别这段关卡数据',
+  'ed.rmTitle':'删除关卡？',
+  'ed.rmBody':n=>`《${n}》将被删除，无法恢复。`,
+},
+
+en: {
+  'doc.title':'Word Pages',
+  'doc.desc':'A book-styled word puzzle: swipe letters up, down, left and right, and use up every tile.',
+  'lang.name':'English',
+
+  'cover.title':'Word&nbsp;Pages',
+  'cover.sub':'字&nbsp;&nbsp;页',
+  'cover.tag':'A quiet little book of letters',
+  'cover.tagRef':'Reference levels · local only',
+  'cover.continue':'Continue',
+  'cover.toc':'Contents',
+  'cover.daily':'Daily Page',
+  'cover.dict':'My Dictionary',
+  'aria.settings':'Settings',
+  'aria.back':'Back',
+  'aria.toc':'Contents',
+  'aria.delete':'Delete',
+
+  'book.name':b=>`Book ${b+1}`,
+  'book.sub':b=>['Beginner','Easy','Normal','Hard','Expert'][b]||'',
+  'book.ref':'Reference',
+  'chapter':k=>`Chapter ${k+1}`,
+  'chapter.names':['Dawn','Old Bookshop','Rainy Lane','Ink Stains','Far Away','By Lamplight','Tides','In the Woods','Letters','Star Chart',
+    'Homeward','Hearth','The Ferry','Bells','Paper Kite','Snowy Night','Long Hall','Blossom News','Mountain Home','Old Dreams','Sea Breeze','Platform','Tea Time','Deer Song'],
+  'page':n=>`Page ${n}`,
+  'cont.sub':(name,sub,ch,pg)=>`${name?name+' · ':''}Ch. ${ch+1} · Page ${pg}`,
+  'tiers':['','Very common','Common','Average','Rare','Very rare'],
+  'tier.none':'Unrated',
+
+  'toc.title':'Contents',
+  'toc.locked':'Finish the earlier chapters to unlock',
+
+  'daily.title':'Daily Page',
+  'daily.month':d=>`${EN_MONTHS[d.getMonth()]} ${d.getFullYear()}`,
+  'daily.week':d=>['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()],
+  'daily.strip':['M','T','W','T','F','S','S'],
+  'daily.streak':'Day streak',
+  'daily.total':'Completed',
+  'daily.play':"Open today's page",
+  'daily.replay':"Reread today's page",
+  'daily.chap':d=>`Daily Page · ${EN_MONTHS[d.getMonth()].slice(0,3)} ${d.getDate()}`,
+  'daily.lvl':'Today',
+
+  'dict.title':'My Dictionary',
+  'dict.search':'Search your words…',
+  'dict.count':n=>`${n} ${n===1?'word':'words'}`,
+  'dict.noMatch':'No matching words',
+  'dict.empty':'Definitions of the words you find will be collected here.',
+  'dict.more':n=>`…${n} more, use search to find them`,
+  'def.none':'(no definition yet)',
+  'def.noneWord':'(no definition for this word)',
+  'def.sep':'; ',
+
+  'game.words':'Words',
+  'game.info':'Page info',
+  'game.editTitle':'Level Editor · Playtest',
+  'game.custom':'Custom level',
+  'game.customName':n=>`“${n}”`,
+  'tool.undo':'Undo',
+  'tool.notes':'Notes',
+  'tool.notesAria':'Margin notes',
+  'tool.hint':'Hint',
+  'tool.fire':'Burst',
+  'mark.hard':'Hard word',
+  'mark.rare':'Obscure word',
+
+  'info.extras':'Bonus words',
+  'info.rev':'Reversed',
+  'info.multi':'Multi-use tiles',
+  'info.multiVal':m=>`×2 ${m[2]} · ×3 ${m[3]} · ×4 ${m[4]} · ×5+ ${m[5]}`,
+  'info.straight':'Straight',
+  'info.oneTurn':'One turn',
+  'info.multiTurn':'Multi-turn',
+  'info.pct':(a,b,p)=>`${a} / ${b} (${p})`,
+
+  'toast.later':'Save this word for later, try another one first',
+  'toast.dupWord':'Already in the word list',
+  'toast.dupExtra':'Already noted in the margin',
+  'toast.extra':w=>`Bonus word · ${w}  +1 ink`,
+  'toast.curtain':'The curtain lifts!',
+  'toast.noInk':n=>`Not enough ink (need ${n})`,
+  'toast.fire':n=>`Burst revealed ${n} ${n===1?'letter':'letters'}`,
+  'expr':['','','','Nice!','Great!','Perfect!','Brilliant!','Incredible!'],
+  'label.t5':'A very rare word!',
+  'label.t4':'A rare word!',
+  'label.hard':'Hard word!',
+  'label.rare':'Obscure word!',
+  'label.longest':'Longest word!',
+
+  'fail.title':'The Ink Has Dried',
+  'fail.body':'The remaining words can no longer be spelled with the tiles left.<br>Try undoing the last word and taking another path.',
+  'fail.restart':'Restart page',
+  'fail.undo':'Undo last word',
+
+  'extras.title':'Margin Notes',
+  'extras.found':(a,b)=>`Bonus words on this page: <b>${a}</b> / ${b}`,
+  'extras.note':"Bonus words aren't in the word list. Each one earns 1 drop of ink.",
+  'extras.empty':'No notes yet. Try spelling a word that isn\'t on the list?',
+  'extras.close':'Close',
+
+  'tip.swipe':'Swipe through letters up, down, left or right to spell the listed words',
+  'tip.count':'The small red number is how many uses a tile has left. At zero it disappears',
+  'tip.back':'Words can also run right-to-left or bottom-to-top',
+  'tip.hint':'Stuck? A Hint reveals a letter and lights up its tile',
+  'tip.curt':'Curtained tiles open once you find the number of words shown in the circle',
+
+  'msg.generic':['This page was no match for you!','Solved like a true wordsmith!','Smooth as ink!\nKeep it up!','Neat and tidy. On to the next page!','Pure word magic!'],
+  'msg.perfect':['Flawless!\nNot a single wrong guess!','Zero mistakes, a beautiful page!','Not one slip, a true master!'],
+  'msg.bonus':['Unstoppable!\nYou found {0} bonus words!','On fire!\n{0} bonus words so far!','Words are flowing!\n{0} bonus words collected!'],
+  'msg.chapter':ch=>`${ch} complete!\nThe next chapter awaits.`,
+  'done.edit':'Playtest passed',
+  'done.daily':'Read today',
+  'done.words':'Words',
+  'done.extras':'Bonus',
+  'done.ink':'Ink',
+  'done.perfect':'Perfect',
+  'done.read':'Read',
+  'done.backEditor':'Back to editor',
+  'done.closeDiary':'Close diary',
+  'done.next':'Next page →',
+  'done.toc':'Back to contents',
+
+  'set.title':'Settings',
+  'set.lang':'Language',
+  'set.skin':'Skin',
+  'set.sound':'Sound',
+  'set.source':'Level set',
+  'set.orig':'Original',
+  'set.ref':'Reference',
+  'set.read':'Pages read',
+  'set.dict':'Words collected',
+  'set.reset':'Reset all progress',
+  'set.done':'Done',
+  'reset.title':'Reset progress?',
+  'reset.body':'All pages read, ink and dictionary entries will be erased. This cannot be undone.',
+  'reset.ok':'Reset',
+  'reset.toast':'Progress reset',
+  'cancel':'Cancel',
+  'skin.book':'Pages', 'skin.classic':'Heirloom', 'skin.typewriter':'Typewriter',
+  'skin.keyboard':'Keyboard', 'skin.glass':'Liquid Glass', 'skin.cartoon':'Cartoon',
+
+  'ed.title':'Level Editor',
+  'ed.esc':'Esc to exit',
+  'ed.size':'Size',
+  'ed.w':'W',
+  'ed.h':'H',
+  'ed.brush':'Brush',
+  'ed.letter':'Letters',
+  'ed.curtA':'Curtain A',
+  'ed.curtB':'Curtain B',
+  'ed.req1':'Opens after',
+  'ed.req2':'words',
+  'ed.random':'Fill blanks randomly',
+  'ed.clear':'Clear letters',
+  'ed.name':'Name this page (optional)',
+  'ed.words':'Words',
+  'ed.wordIn':'Type a word, press Enter',
+  'ed.add':'Add',
+  'ed.onBoard':'Words on the board',
+  'ed.rescan':'Rescan',
+  'ed.clickAdd':'Click to add to the list; ',
+  'ed.allExtra':'mark the rest as bonus words',
+  'ed.extras':'Bonus words',
+  'ed.play':'Play',
+  'ed.save':'Save',
+  'ed.new':'New',
+  'ed.export':'Export',
+  'ed.import':'Import',
+  'ed.mine':'My levels',
+  'ed.cell':n=>`Cell ${n}`,
+  'ed.routes':n=>`${n} routes`,
+  'ed.noRoute':'no path',
+  'ed.noWords':'No words yet',
+  'ed.extrasHint':'Optional: words that also count, outside the list',
+  'ed.chk.empty':n=>`${n} ${n===1?'cell is':'cells are'} still empty`,
+  'ed.chk.filled':'Every cell has a letter',
+  'ed.chk.needWord':'Add at least 1 word',
+  'ed.chk.bad':list=>`No path for: ${list.join(', ')}`,
+  'ed.chk.allOk':n=>`All ${n} ${n===1?'word':'words'} can be traced`,
+  'ed.chk.uncovered':n=>`${n} ${n===1?'cell is':'cells are'} not used by any word (marked red)`,
+  'ed.chk.counts':'Every cell is used; tile counts computed',
+  'ed.chk.curtain':'Curtains can\'t open in order: lower "Opens after", or route more words around the curtains',
+  'ed.chk.timeout':'Too many combinations to finish: try removing some words',
+  'ed.chk.noCombo':'No combination of paths uses every cell',
+  'ed.chk.curt':(k,cells,req,tooMany)=>`Curtain ${k}: ${cells} cells, opens after ${req} words${tooMany?' (must be fewer than the total word count)':''}`,
+  'ed.pct':(n,p)=>`${n} (${p}%)`,
+  'ed.noMore':'No more words found',
+  'ed.fillFirst':'Fill in letters on the left first',
+  'ed.untitled':'Untitled',
+  'ed.edit':'Edit',
+  'ed.try':'Play',
+  'ed.del':'Delete',
+  'ed.savedEmpty':'Saved levels will appear here',
+  'ed.min3':'Words need at least 3 letters',
+  'ed.dup':'Already added',
+  'ed.rescanned':'Rescanned',
+  'ed.noneLeft':'No words left',
+  'ed.incomplete':'The level is incomplete. See the checklist at bottom left',
+  'ed.saved':'Saved to My levels',
+  'ed.newTitle':'New level',
+  'ed.newBody':'Unsaved changes will be cleared.',
+  'ed.exportTitle':'Export level',
+  'ed.exportBody':'Level data (same format as the built-in levels; share it for others to import):',
+  'ed.close':'Close',
+  'ed.copy':'Copy',
+  'ed.copied':'Copied',
+  'ed.importTitle':'Import level',
+  'ed.importPh':'Paste exported level JSON, e.g. {"g":"DTY,ARM","t":"ARM ART ARMY DART",...}',
+  'ed.imported':'Imported',
+  'ed.importBad':"Couldn't read this level data",
+  'ed.rmTitle':'Delete level?',
+  'ed.rmBody':n=>`“${n}” will be deleted. This cannot be undone.`,
+}
+};
+
+const LANGS = ['zh','en'];
+let lang;
+try{ lang = localStorage.getItem('wordpages.lang'); }catch(e){}
+if(!LANGS.includes(lang)) lang = /^zh/i.test(navigator.language||'') ? 'zh' : 'en';
+
+function t(key, ...a){
+  let s = STR[lang][key];
+  if(s===undefined) s = STR.zh[key];
+  if(s===undefined) return key;
+  if(typeof s==='function') return s(...a);
+  if(typeof s==='string' && a.length) return s.replace(/\{(\d)\}/g,(_,i)=>a[i]);
+  return s;
+}
+function apply(root){
+  root = root || document;
+  document.documentElement.lang = lang==='zh' ? 'zh-CN' : 'en';
+  document.title = t('doc.title');
+  const md = document.querySelector('meta[name="description"]'); if(md) md.content = t('doc.desc');
+  root.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+  root.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.dataset.i18nHtml); });
+  root.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
+  root.querySelectorAll('[data-i18n-aria]').forEach(el=>{ el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  root.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title = t(el.dataset.i18nTitle); });
+}
+window.I18N = {
+  LANGS,
+  get lang(){ return lang; },
+  set(l){
+    if(!LANGS.includes(l)) return;
+    lang = l;
+    try{ localStorage.setItem('wordpages.lang', l); }catch(e){}
+    apply();
+  },
+  name: l => STR[l]['lang.name'],
+  apply,
+};
+window.t = t;
+document.documentElement.lang = lang==='zh' ? 'zh-CN' : 'en';
+})();

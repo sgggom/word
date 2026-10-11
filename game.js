@@ -9,33 +9,22 @@ const HAS_REF = !!window.REF_LEVELS;
 let SET = 'orig';
 try{ if(HAS_REF && localStorage.getItem('wordpages.set')==='ref') SET='ref'; }catch(e){}
 /* 原创关卡分 5 册（按词汇难度比例生成）；参考关卡视为单独一册 */
-const BOOKS = SET==='ref' ? [{name:'参考关卡', sub:'', levels:window.REF_LEVELS||[]}] : (window.BOOKS||[]);
+const BOOKS = SET==='ref' ? [{name:'参考关卡', sub:'', ref:true, levels:window.REF_LEVELS||[]}] : (window.BOOKS||[]);
 const DAILY = (SET==='ref' ? window.REF_DAILY : window.DAILY) || [];
 const DEFS = (SET==='ref' ? window.REF_DEFS : window.DEFS) || {};
 const ZH_DEFS = window.DEFS || {};          // 分级词表的中文释义（两套关卡都可查）
 const TIER = window.TIER || {};             // 单词难度档位 1-5
-const TIER_NAMES = ['','非常常用','常用','一般','罕见','非常罕见'];
 const CHAPTER_SIZE = 20;
 const COST_HINT = 20, COST_FIRE = 60;
 const STORE_KEY = SET==='ref' ? 'wordpages.v1' : 'wordpages.orig.v2';
 
-const CHAPTER_NAMES = ['晨光','旧书店','雨巷','墨痕','远行','灯下','潮汐','林间','信笺','星图',
-  '归途','炉火','渡口','钟声','纸鸢','雪夜','长廊','花信','山居','旧梦','海风','月台','茶事','鹿鸣'];
 const POS = {n:'n.', v:'v.', a:'adj.', s:'adj.', r:'adv.'};
 
-const MSG_GENERIC = ['这一页完全难不倒你！','像真正的文字大师一样解开了！','行云流水！\n继续保持！','干净利落，翻到下一页吧！','纯粹的文字魔法！'];
-const MSG_PERFECT = ['完美无瑕！\n一次都没有猜错！','零失误，漂亮的一页！','一笔未错，堪称大师！'];
-const MSG_BONUS = ['势不可挡！\n找到了 {0} 个额外单词！','手感火热！\n额外单词已有 {0} 个！','词如泉涌！\n{0} 个额外单词收入囊中！'];
-const EXPR = ['','','','不错！','很好！','完美！','精彩！','难以置信！'];
-
-function cnum(n){
-  const d='零一二三四五六七八九';
-  if(n<10) return d[n];
-  if(n<20) return '十'+(n%10?d[n%10]:'');
-  if(n<100) return d[Math.floor(n/10)]+'十'+(n%10?d[n%10]:'');
-  const h=Math.floor(n/100), r=n%100;
-  return d[h]+'百'+(r===0?'':(r<10?'零'+d[r]:(r<20?'一'+cnum(r):cnum(r))));
-}
+/* 文案见 i18n.js */
+const tierName = k => t('tiers')[k];
+const chapterName = k => { const a=t('chapter.names'); return a[k%a.length]; };
+const bookName = b => BOOKS[b].ref ? t('book.ref') : t('book.name', b, BOOKS[b].name);
+const bookSub = b => BOOKS[b].ref ? '' : t('book.sub', b, BOOKS[b].sub);
 const pick = a => a[Math.floor(Math.random()*a.length)];
 const fmt = (s,...a) => s.replace(/\{(\d)\}/g,(_,i)=>a[i]);
 function todayKey(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -137,13 +126,13 @@ function closeModal(){ $('#modal').hidden=true; }
 function campaignIdx(){ return Math.min(save.level, LEVELS.length-1); }
 function renderHome(){
   const i = save.cur && save.cur.mode==='c' ? save.cur.idx : campaignIdx();
-  $('#contSub').textContent = `${BOOKS.length>1 ? BOOKS[book].name+'·'+BOOKS[book].sub+' · ' : ''}第${cnum(Math.floor(i/CHAPTER_SIZE)+1)}章 · 第 ${i+1} 页`;
-  $('#coverTag').textContent = SET==='ref' ? '参考关卡 · 仅在本地可用' : '一本关于字母的安静小书';
+  $('#contSub').textContent = t('cont.sub', BOOKS.length>1 ? bookName(book) : '', bookSub(book), Math.floor(i/CHAPTER_SIZE), i+1);
+  $('#coverTag').textContent = SET==='ref' ? t('cover.tagRef') : t('cover.tag');
 }
 
 /* ================= 目录 ================= */
 let tocOpen = -1;
-function chapterTitle(k){ return `第${cnum(k+1)}章`; }
+function chapterTitle(k){ return t('chapter', k); }
 function renderToc(){
   const list=$('#tocList'); list.innerHTML='';
   const nCh=Math.ceil(LEVELS.length/CHAPTER_SIZE);
@@ -154,16 +143,16 @@ function renderToc(){
     const shelf=document.createElement('div'); shelf.className='shelf';
     BOOKS.forEach((bk,b)=>{
       const n=bk.levels.length, done=Math.min(n, bookProgress(b));
-      const bar=(bk.mix||[]).map((x,t)=>x?`<i class="t${t+1}" style="flex:${x}" title="${TIER_NAMES[t+1]} ${x}%"></i>`:'').join('');
+      const bar=(bk.mix||[]).map((x,t)=>x?`<i class="t${t+1}" style="flex:${x}" title="${tierName(t+1)} ${x}%"></i>`:'').join('');
       const el=document.createElement('button');
       el.className='vol'+(b===book?' on':'');
-      el.innerHTML=`<b>${bk.name}</b><span>${bk.sub}</span><em class="mixbar">${bar}</em><small>${done} / ${n}</small>`;
+      el.innerHTML=`<b>${bookName(b)}</b><span>${bookSub(b)}</span><em class="mixbar">${bar}</em><small>${done} / ${n}</small>`;
       el.onclick=()=>{ switchBook(b); tocOpen=-1; renderToc(); };
       shelf.appendChild(el);
     });
     frag.appendChild(shelf);
     const legend=document.createElement('div'); legend.className='mix-legend';
-    legend.innerHTML=[1,2,3,4,5].map(t=>`<span><i class="t${t}"></i>${TIER_NAMES[t]}</span>`).join('');
+    legend.innerHTML=[1,2,3,4,5].map(k=>`<span><i class="t${k}"></i>${tierName(k)}</span>`).join('');
     frag.appendChild(legend);
   }
   for(let k=0;k<nCh;k++){
@@ -172,8 +161,8 @@ function renderToc(){
     const doneN = Math.max(0, Math.min(save.level, last+1)-first);
     const row=document.createElement('button');
     row.className='chap-row'+(locked?' locked':'');
-    row.innerHTML=`<span class="cn">${chapterTitle(k)}</span><span class="ct">${CHAPTER_NAMES[k%CHAPTER_NAMES.length]}</span><span class="dots"></span><span class="cp">${first+1}</span><span class="cs">${locked?'<svg><use href="#i-lock"/></svg>':doneN+'/'+(last-first+1)}</span>`;
-    row.onclick=()=>{ if(locked){toast('完成前面的章节后解锁');return;} tocOpen = tocOpen===k?-2:k; renderToc(); };
+    row.innerHTML=`<span class="cn">${chapterTitle(k)}</span><span class="ct">${chapterName(k)}</span><span class="dots"></span><span class="cp">${first+1}</span><span class="cs">${locked?'<svg><use href="#i-lock"/></svg>':doneN+'/'+(last-first+1)}</span>`;
+    row.onclick=()=>{ if(locked){toast(t('toc.locked'));return;} tocOpen = tocOpen===k?-2:k; renderToc(); };
     frag.appendChild(row);
     if(k===tocOpen && !locked){
       const pg=document.createElement('div'); pg.className='chap-pages';
@@ -201,9 +190,9 @@ function dailyStreak(){
 }
 function renderDaily(){
   const d=new Date();
-  $('#dMonth').textContent=`${d.getFullYear()} 年 ${d.getMonth()+1} 月`;
+  $('#dMonth').textContent=t('daily.month', d);
   $('#dDay').textContent=d.getDate();
-  $('#dWeek').textContent='星期'+'日一二三四五六'[d.getDay()];
+  $('#dWeek').textContent=t('daily.week', d);
   $('#dStreak').textContent=dailyStreak();
   $('#dTotal').textContent=Object.keys(save.daily).length;
   const strip=$('#dWeekStrip'); strip.innerHTML='';
@@ -213,32 +202,32 @@ function renderDaily(){
     const k=todayKey(x);
     const el=document.createElement('div');
     el.className=(save.daily[k]?'done ':'')+(k===todayKey(d)?'today':'');
-    el.innerHTML=`${'一二三四五六日'[i]}<i>${save.daily[k]?'✓':x.getDate()}</i>`;
+    el.innerHTML=`${t('daily.strip')[i]}<i>${save.daily[k]?'✓':x.getDate()}</i>`;
     strip.appendChild(el);
   }
   const done=!!save.daily[todayKey(d)];
-  $('#btnDailyPlay').textContent = done ? '重读今日一页' : '翻开今日一页';
+  $('#btnDailyPlay').textContent = done ? t('daily.replay') : t('daily.play');
 }
 
 /* ================= 词典 ================= */
 function renderDict(){
   const q=($('#dictQ').value||'').trim().toUpperCase();
   const all=Object.keys(save.words).sort();
-  $('#dictCount').textContent=`${all.length} 词`;
+  $('#dictCount').textContent=t('dict.count', all.length);
   const list=$('#dictList'); list.innerHTML='';
   const ws = q ? all.filter(w=>w.includes(q)) : all;
   if(!ws.length){
-    list.innerHTML=`<div class="d-empty">${all.length?'没有找到匹配的单词':'找到新单词后，它们的释义会收录在这里。'}</div>`;
+    list.innerHTML=`<div class="d-empty">${all.length?t('dict.noMatch'):t('dict.empty')}</div>`;
     return;
   }
   let html='', cur='';
   ws.slice(0,600).forEach(w=>{
     if(w[0]!==cur){ cur=w[0]; html+=`<div class="d-letter">${cur}</div>`; }
     const d=DEFS[w]||ZH_DEFS[w];
-    const sense = d ? d.slice(0,2).map(s=>`<i>${POS[s[0]]||''}</i><span>${esc(s[1])}</span>`).join('；') : '<span style="opacity:.6">（暂无释义）</span>';
+    const sense = d ? d.slice(0,2).map(s=>`<i>${POS[s[0]]||''}</i><span>${esc(s[1])}</span>`).join(t('def.sep')) : `<span style="opacity:.6">${t('def.none')}</span>`;
     html+=`<div class="d-entry"><b>${w.toLowerCase()}</b>${sense}</div>`;
   });
-  if(ws.length>600) html+=`<div class="d-empty">…还有 ${ws.length-600} 个，请用搜索查找</div>`;
+  if(ws.length>600) html+=`<div class="d-empty">${t('dict.more', ws.length-600)}</div>`;
   list.innerHTML=html;
 }
 function esc(s){ return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
@@ -361,17 +350,17 @@ function renderGame(){
   closeModal();
   const ch=Math.floor(idx/CHAPTER_SIZE);
   if(mode==='e'){
-    $('#chapTitle').textContent='关卡编辑器 · 试玩';
-    $('#lvlTitle').textContent=customLevel.name ? '《'+customLevel.name+'》' : '自制关卡';
+    $('#chapTitle').textContent=t('game.editTitle');
+    $('#lvlTitle').textContent=customLevel.name ? t('game.customName', customLevel.name) : t('game.custom');
     $('#folioL').textContent='— ✎ —'; $('#folioR').textContent='— ✎ —';
   } else if(mode==='d'){
     const d=new Date();
-    $('#chapTitle').textContent=`每日一页 · ${d.getMonth()+1}月${d.getDate()}日`;
-    $('#lvlTitle').textContent='今日一页';
+    $('#chapTitle').textContent=t('daily.chap', d);
+    $('#lvlTitle').textContent=t('daily.lvl');
     $('#folioL').textContent='— ✦ —'; $('#folioR').textContent='— '+d.getDate()+' —';
   } else {
-    $('#chapTitle').textContent=`${BOOKS.length>1 ? BOOKS[book].name+' · ' : ''}${chapterTitle(ch)} · ${CHAPTER_NAMES[ch%CHAPTER_NAMES.length]}`;
-    $('#lvlTitle').textContent=`第 ${idx+1} 页`;
+    $('#chapTitle').textContent=`${BOOKS.length>1 ? bookName(book)+' · ' : ''}${chapterTitle(ch)} · ${chapterName(ch)}`;
+    $('#lvlTitle').textContent=t('page', idx+1);
     $('#folioL').textContent=`— ${idx*2+2} —`; $('#folioR').textContent=`— ${idx*2+3} —`;
   }
   $('#footnote').innerHTML=''; $('#footnote').classList.remove('show');
@@ -400,9 +389,9 @@ function renderWords(){
       const rev=P.rev[i].includes(k);
       h+=`<span class="lt${rev?' rev':''}" style="animation-delay:${k*45}ms">${(P.found[i]||rev)?w[k]:''}</span>`;
     }
-    if(L.tiers[i]>=4) h+=`<span class="mark t${L.tiers[i]}" title="${TIER_NAMES[L.tiers[i]]}">${L.tiers[i]===5?'◆':'◇'}</span>`;
-    else if(L.types[i]===2) h+='<span class="mark" title="难词">★</span>';
-    else if(L.types[i]===1) h+='<span class="mark" title="生僻词">◆</span>';
+    if(L.tiers[i]>=4) h+=`<span class="mark t${L.tiers[i]}" title="${tierName(L.tiers[i])}">${L.tiers[i]===5?'◆':'◇'}</span>`;
+    else if(L.types[i]===2) h+=`<span class="mark hard" title="${t('mark.hard')}">★</span>`;
+    else if(L.types[i]===1) h+=`<span class="mark" title="${t('mark.rare')}">◆</span>`;
     el.innerHTML=h;
     el.onclick=()=>{ if(P.found[i]) showDef(w); };
     box.appendChild(el);
@@ -423,10 +412,14 @@ function refreshWord(i, anim){
   });
   if(anim && !P.found[i]){ el.classList.remove('hinted'); void el.offsetWidth; el.classList.add('hinted'); }
 }
+function defHTML(w){
+  const d=DEFS[w]||ZH_DEFS[w];
+  const sense = d ? d.slice(0,2).map(s=>`<i>${POS[s[0]]||''}</i><span>${esc(s[1])}</span>`).join(t('def.sep')) : `<span style="opacity:.7">${t('def.noneWord')}</span>`;
+  return `<b>${w.toLowerCase()}</b>${TIER[w]?`<em class="tier t${TIER[w]}">${tierName(TIER[w])}</em>`:''}${sense}`;
+}
 function showDef(w){
-  const f=$('#footnote'), d=DEFS[w]||ZH_DEFS[w];
-  const sense = d ? d.slice(0,2).map(s=>`<i>${POS[s[0]]||''}</i><span>${esc(s[1])}</span>`).join('；') : '<span style="opacity:.7">（此词暂无释义）</span>';
-  f.innerHTML=`<b>${w.toLowerCase()}</b>${TIER[w]?`<em class="tier t${TIER[w]}">${TIER_NAMES[TIER[w]]}</em>`:''}${sense}`;
+  const f=$('#footnote');
+  f.innerHTML=defHTML(w);
   f.classList.add('show');
 }
 
@@ -455,16 +448,16 @@ function renderInfo(){
   box.hidden=!open;
   if(!open) return;
   const s=levelStats(), pct=n=>s.words?Math.round(100*n/s.words)+'%':'—';
-  const tiers=[1,2,3,4,5].filter(t=>s.tiers[t]).map(t=>`<span class="tier t${t}">${TIER_NAMES[t]} ${s.tiers[t]}</span>`).join('');
+  const tiers=[1,2,3,4,5].filter(k=>s.tiers[k]).map(k=>`<span class="tier t${k}">${tierName(k)} ${s.tiers[k]}</span>`).join('');
   box.innerHTML=`
     ${tiers?`<div class="info-tiers">${tiers}</div>`:''}
     <dl>
-      <dt>非目标单词</dt><dd>${s.extras}</dd>
-      <dt>倒序单词</dt><dd>${s.ok?`${s.rev} / ${s.words}（${pct(s.rev)}）`:'—'}</dd>
-      <dt>多选字砖</dt><dd>2选 ${s.multi[2]} · 3选 ${s.multi[3]} · 4选 ${s.multi[4]} · 5选+ ${s.multi[5]}</dd>
-      <dt>直线单词</dt><dd>${s.ok?s.straight:'—'}</dd>
-      <dt>一拐单词</dt><dd>${s.ok?s.oneTurn:'—'}</dd>
-      <dt>多拐单词</dt><dd>${s.ok?s.multiTurn:'—'}</dd>
+      <dt>${t('info.extras')}</dt><dd>${s.extras}</dd>
+      <dt>${t('info.rev')}</dt><dd>${s.ok?t('info.pct', s.rev, s.words, pct(s.rev)):'—'}</dd>
+      <dt>${t('info.multi')}</dt><dd>${t('info.multiVal', s.multi)}</dd>
+      <dt>${t('info.straight')}</dt><dd>${s.ok?s.straight:'—'}</dd>
+      <dt>${t('info.oneTurn')}</dt><dd>${s.ok?s.oneTurn:'—'}</dd>
+      <dt>${t('info.multiTurn')}</dt><dd>${s.ok?s.multiTurn:'—'}</dd>
     </dl>`;
 }
 
@@ -654,15 +647,15 @@ function submit(p){
   const ti=L.words.findIndex((w,i)=>w===s && !P.found[i]);
   if(ti>=0){
     const sp=safePath(ti,p);
-    if(!sp){ flashWord('dup'); toast('这个词稍后再写，先找找别的单词吧'); return; }
+    if(!sp){ flashWord('dup'); toast(t('toast.later')); return; }
     acceptWord(ti,sp); return;
   }
-  if(L.words.includes(s)){ flashWord('dup'); toast('这个词已经写进词表了'); return; }
+  if(L.words.includes(s)){ flashWord('dup'); toast(t('toast.dupWord')); return; }
   if(L.extras.includes(s)){
-    if(P.extras.includes(s)){ flashWord('dup'); toast('这条批注已经记下了'); return; }
+    if(P.extras.includes(s)){ flashWord('dup'); toast(t('toast.dupExtra')); return; }
     P.extras.push(s); addToDict(s);
     save.coins+=1; updateInk(true);
-    sfx.extra(); toast(`额外单词 · ${s.toLowerCase()}  +1 墨水`);
+    sfx.extra(); toast(t('toast.extra', s.toLowerCase()));
     flyToExtras(s);
     updateTools(); persist(); return;
   }
@@ -700,23 +693,23 @@ function acceptWord(ti, p){
   refreshTiles(p, opened);
   refreshWord(ti, false); flyEnd=flyToWord(ti); updateProg();
   const w=L.words[ti];
-  let label = EXPR[Math.min(w.length,7)];
-  if(L.tiers[ti]===5) label='非常罕见的词！'; else if(L.tiers[ti]===4) label='罕见词！';
-  else if(L.types[ti]===2) label='难词！'; else if(L.types[ti]===1) label='生僻词！';
-  else if(w.length===Math.max(...L.words.map(x=>x.length)) && w.length>=6) label='最长单词！';
+  let label = t('expr')[Math.min(w.length,7)];
+  if(L.tiers[ti]===5) label=t('label.t5'); else if(L.tiers[ti]===4) label=t('label.t4');
+  else if(L.types[ti]===2) label=t('label.hard'); else if(L.types[ti]===1) label=t('label.rare');
+  else if(w.length===Math.max(...L.words.map(x=>x.length)) && w.length>=6) label=t('label.longest');
   sfx.found();
   if(label) setTimeout(()=>toast(label),120);
   hideTip();
-  if(opened.length){ setTimeout(()=>{ sfx.reveal(); if(!save.tips.curtOpen){ save.tips.curtOpen=1; toast('幕布揭开了！'); } },250); }
+  if(opened.length){ setTimeout(()=>{ sfx.reveal(); if(!save.tips.curtOpen){ save.tips.curtOpen=1; toast(t('toast.curtain')); } },250); }
   updateTools(); persist();
   if(P.found.every(Boolean)){ P.done=true; completeLevel(); return; }
   const sol=solve();
   if(sol===null) setTimeout(failDialog, 650);
 }
 function failDialog(){
-  modal({title:'墨迹已干', dismiss:false,
-    body:'<p style="margin:0;text-align:center">剩下的单词已经无法用现有的字砖拼出了。<br>试着撤回上一个词，换一条路径吧。</p>',
-    buttons:[{label:'重写本页', onClick:restartLevel},{label:'撤回上一词', primary:true, onClick:undo}]});
+  modal({title:t('fail.title'), dismiss:false,
+    body:`<p style="margin:0;text-align:center">${t('fail.body')}</p>`,
+    buttons:[{label:t('fail.restart'), onClick:restartLevel},{label:t('fail.undo'), primary:true, onClick:undo}]});
 }
 function undo(){
   const h=P.hist.pop(); if(!h) return;
@@ -745,7 +738,7 @@ function hiddenLetters(){
   return out;
 }
 function spend(n){
-  if(save.coins<n){ toast(`墨水不足（需要 ${n}）`); return false; }
+  if(save.coins<n){ toast(t('toast.noInk', n)); return false; }
   save.coins-=n; updateInk(true); return true;
 }
 function hint(){
@@ -774,18 +767,24 @@ function firework(){
   pickN.forEach(([w,k])=>{ P.rev[w].push(k); touched.add(w); });
   touched.forEach(w=>refreshWord(w,true));
   sfx.reveal(); setTimeout(sfx.reveal,140); setTimeout(sfx.reveal,280);
-  toast(`烟花点亮了 ${pickN.length} 个字母`);
+  toast(t('toast.fire', pickN.length));
   updateTools(); persist();
 }
 function showExtras(){
   const total=L.extras.length;
   const body=document.createElement('div');
-  body.innerHTML = `<p style="margin:0 0 6px;text-align:center">本页额外单词：已找到 <b>${P.extras.length}</b> / ${total}</p>`+
-    `<p style="margin:0 0 10px;text-align:center;font-size:13px">额外单词不计入词表，每找到一个获得 1 滴墨水。</p>`;
+  body.innerHTML = `<p style="margin:0 0 6px;text-align:center">${t('extras.found', P.extras.length, total)}</p>`+
+    `<p style="margin:0 0 10px;text-align:center;font-size:13px">${t('extras.note')}</p>`;
   const l=document.createElement('div'); l.className='extra-list';
-  l.innerHTML = P.extras.length ? P.extras.map(w=>`<span>${w.toLowerCase()}</span>`).join('') : '<em>还没有批注。试试拼出词表以外的单词？</em>';
+  l.innerHTML = P.extras.length ? P.extras.map(w=>`<span data-w="${w}">${w.toLowerCase()}</span>`).join('') : `<em>${t('extras.empty')}</em>`;
   body.appendChild(l);
-  modal({title:'页边批注', body, buttons:[{label:'合上', primary:true}]});
+  const f=document.createElement('div'); f.className='footnote extra-def';
+  body.appendChild(f);
+  l.querySelectorAll('[data-w]').forEach(el=>el.onclick=()=>{
+    l.querySelectorAll('.on').forEach(x=>x.classList.remove('on')); el.classList.add('on');
+    f.innerHTML=defHTML(el.dataset.w); f.classList.add('show');
+  });
+  modal({title:t('extras.title'), body, buttons:[{label:t('extras.close'), primary:true}]});
 }
 
 /* ---------- 教学提示 ---------- */
@@ -794,14 +793,14 @@ function showTipIfAny(){
   hideTip();
   let msg=null, key=null;
   if(mode==='c'){
-    if(idx===0 && !save.tips.swipe){ key='swipe'; msg='沿着字母上下左右滑动，拼出词表里的单词'; }
-    else if(idx===1 && !save.tips.count){ key='count'; msg='红色小数字是字砖剩余的使用次数，用完就会消失'; }
-    else if(idx===2 && !save.tips.back){ key='back'; msg='单词也可以从右往左、从下往上地滑'; }
-    else if(idx===4 && !save.tips.hint){ key='hint'; msg='卡住了？用「提示」揭示一个字母，并点亮它所在的字砖'; }
+    if(idx===0 && !save.tips.swipe){ key='swipe'; msg=t('tip.swipe'); }
+    else if(idx===1 && !save.tips.count){ key='count'; msg=t('tip.count'); }
+    else if(idx===2 && !save.tips.back){ key='back'; msg=t('tip.back'); }
+    else if(idx===4 && !save.tips.hint){ key='hint'; msg=t('tip.hint'); }
   }
-  if(!msg && L.curtains.length && !save.tips.curt){ key='curt'; msg='被幕布盖住的字砖，要先找到圆圈里所示数量的单词才会揭开'; }
+  if(!msg && L.curtains.length && !save.tips.curt){ key='curt'; msg=t('tip.curt'); }
   if(!msg) return;
-  const t=$('#tip'); t.textContent=msg; t.hidden=false;
+  const tip=$('#tip'); tip.textContent=msg; tip.hidden=false;
   save.tips[key]=1; persist();
   clearTimeout(tipTimer); tipTimer=setTimeout(hideTip, 9000);
 }
@@ -827,24 +826,24 @@ function showDone(restored){
   $$('.done-card').forEach(e=>e.remove());
   const card=document.createElement('div'); card.className='done-card';
   let msg;
-  if(P.mistakes===0) msg=pick(MSG_PERFECT);
-  else if(P.extras.length>=3) msg=fmt(pick(MSG_BONUS), P.extras.length);
-  else msg=pick(MSG_GENERIC);
-  if(mode==='c' && (idx+1)%CHAPTER_SIZE===0) msg=`${chapterTitle(Math.floor(idx/CHAPTER_SIZE))}，读完了！\n下一章正在等你。`;
+  if(P.mistakes===0) msg=pick(t('msg.perfect'));
+  else if(P.extras.length>=3) msg=fmt(pick(t('msg.bonus')), P.extras.length);
+  else msg=pick(t('msg.generic'));
+  if(mode==='c' && (idx+1)%CHAPTER_SIZE===0) msg=t('msg.chapter', chapterTitle(Math.floor(idx/CHAPTER_SIZE)));
   const isDaily=mode==='d', isEdit=mode==='e';
   const hasNext = !isDaily && !isEdit && idx+1<LEVELS.length;
   card.innerHTML=`
     <div class="fin">— Finis —</div>
-    <div class="big">${isEdit?'试玩通过':(isDaily?'今日已读':'第 '+(idx+1)+' 页')}</div>
-    <div class="orn"><svg class="fleuron" viewBox="0 0 64 16" aria-hidden="true"><path d="M2 8h18M44 8h18" stroke="currentColor" stroke-width="1"/><circle cx="23" cy="8" r="1.4" fill="currentColor"/><circle cx="41" cy="8" r="1.4" fill="currentColor"/><path d="M32 1c4 3 4 11 0 14c-4-3-4-11 0-14z" fill="currentColor"/></svg></div>
+    <div class="big">${isEdit?t('done.edit'):(isDaily?t('done.daily'):t('page', idx+1))}</div>
+    <div class="orn"><svg class="fleuron" aria-hidden="true"><use href="#fleuron"/></svg></div>
     <p class="msg">${msg}</p>
     <div class="stats">
-      <div><b>${L.words.length}</b>词表单词</div>
-      <div><b>${P.extras.length}</b>额外单词</div>
-      <div><b>+${P.reward||0}</b>墨水</div>
+      <div><b>${L.words.length}</b>${t('done.words')}</div>
+      <div><b>${P.extras.length}</b>${t('done.extras')}</div>
+      <div><b>+${P.reward||0}</b>${t('done.ink')}</div>
     </div>
-    ${P.mistakes===0?'<div class="seal">完美</div>':'<div class="seal">阅毕</div>'}
-    <button class="plate primary" id="btnNext">${isEdit?'返回编辑器':(isDaily?'合上日记':(hasNext?'翻到下一页 →':'回到目录'))}</button>`;
+    <div class="seal">${P.mistakes===0?t('done.perfect'):t('done.read')}</div>
+    <button class="plate primary" id="btnNext">${isEdit?t('done.backEditor'):(isDaily?t('done.closeDiary'):(hasNext?t('done.next'):t('done.toc')))}</button>`;
   $('#pageR').appendChild(card);
   updateTools();
   card.querySelector('#btnNext').onclick=()=>{
@@ -913,17 +912,24 @@ $('#btnFire').onclick=firework;
 $('#btnExtras').onclick=showExtras;
 $('#btnInfo').onclick=()=>{ save.tips.infoOpen=!save.tips.infoOpen; persist(); renderInfo(); };
 $('#dictQ').addEventListener('input', renderDict);
-$('#btnSettings').onclick=()=>{
+function openSettings(){
   const body=document.createElement('div');
   const curSkin=document.documentElement.getAttribute('data-skin')||'book';
-  body.innerHTML=`<div class="set-row" style="border:0;padding-bottom:2px"><span>皮肤</span></div>
-    <div class="skins">${(window.SKINS||[]).map(k=>`<button class="skin-opt${k.id===curSkin?' on':''}" data-skin="${k.id}"><i class="${k.id}">${k.icon}</i>${k.name}</button>`).join('')}</div>
-    <div class="set-row"><span>音效</span><button class="switch${save.sound?' on':''}" id="swSound" aria-label="音效"></button></div>
-    ${HAS_REF?`<div class="set-row"><span>关卡来源</span><span class="seg"><button data-set="orig" class="${SET==='orig'?'on':''}">原创</button><button data-set="ref" class="${SET==='ref'?'on':''}">参考</button></span></div>`:''}
-    <div class="set-row"><span>已读页数</span><b style="font-family:var(--serif-en)">${BOOKS.reduce((a,_,b)=>a+Math.min(bookProgress(b),BOOKS[b].levels.length),0)} / ${BOOKS.reduce((a,b)=>a+b.levels.length,0)}</b></div>
-    <div class="set-row"><span>词典收录</span><b style="font-family:var(--serif-en)">${Object.keys(save.words).length}</b></div>
-    <div style="text-align:center;margin-top:16px"><button class="text-btn" id="btnReset">清空全部进度</button></div>`;
-  modal({title:'设 置', body, buttons:[{label:'完成', primary:true}]});
+  body.innerHTML=`<div class="set-row"><span>${t('set.lang')}</span><span class="seg">${I18N.LANGS.map(l=>`<button data-lang="${l}" class="${l===I18N.lang?'on':''}">${I18N.name(l)}</button>`).join('')}</span></div>
+    <div class="set-row" style="border:0;padding-bottom:2px"><span>${t('set.skin')}</span></div>
+    <div class="skins">${(window.SKINS||[]).map(k=>`<button class="skin-opt${k.id===curSkin?' on':''}" data-skin="${k.id}"><i class="${k.id}">${k.icon}</i>${t('skin.'+k.id)}</button>`).join('')}</div>
+    <div class="set-row"><span>${t('set.sound')}</span><button class="switch${save.sound?' on':''}" id="swSound" aria-label="${t('set.sound')}"></button></div>
+    ${HAS_REF?`<div class="set-row"><span>${t('set.source')}</span><span class="seg"><button data-set="orig" class="${SET==='orig'?'on':''}">${t('set.orig')}</button><button data-set="ref" class="${SET==='ref'?'on':''}">${t('set.ref')}</button></span></div>`:''}
+    <div class="set-row"><span>${t('set.read')}</span><b style="font-family:var(--serif-en)">${BOOKS.reduce((a,_,b)=>a+Math.min(bookProgress(b),BOOKS[b].levels.length),0)} / ${BOOKS.reduce((a,b)=>a+b.levels.length,0)}</b></div>
+    <div class="set-row"><span>${t('set.dict')}</span><b style="font-family:var(--serif-en)">${Object.keys(save.words).length}</b></div>
+    <div style="text-align:center;margin-top:16px"><button class="text-btn" id="btnReset">${t('set.reset')}</button></div>`;
+  modal({title:t('set.title'), body, buttons:[{label:t('set.done'), primary:true}]});
+  body.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.lang===I18N.lang) return;
+    I18N.set(b.dataset.lang);
+    relang();
+    openSettings();
+  });
   body.querySelectorAll('[data-skin]').forEach(b=>b.onclick=()=>{
     window.applySkin(b.dataset.skin);
     body.querySelectorAll('.skin-opt').forEach(x=>x.classList.toggle('on', x===b));
@@ -937,10 +943,16 @@ $('#btnSettings').onclick=()=>{
   });
   body.querySelector('#swSound').onclick=e=>{ save.sound=!save.sound; e.currentTarget.classList.toggle('on',save.sound); persist(); };
   body.querySelector('#btnReset').onclick=()=>{
-    modal({title:'清空进度？', body:'<p style="text-align:center;margin:0">所有已读页数、墨水与词典都会被清除，且无法恢复。</p>',
-      buttons:[{label:'取消'},{label:'清空', primary:true, onClick:()=>{ save=JSON.parse(JSON.stringify(DEFAULT_SAVE)); persist(); show('home'); toast('已清空'); }}]});
+    modal({title:t('reset.title'), body:`<p style="text-align:center;margin:0">${t('reset.body')}</p>`,
+      buttons:[{label:t('cancel')},{label:t('reset.ok'), primary:true, onClick:()=>{ save=JSON.parse(JSON.stringify(DEFAULT_SAVE)); persist(); show('home'); toast(t('reset.toast')); }}]});
   };
-};
+}
+/* 切换语言后重绘当前屏幕的动态文案（静态文案由 I18N.apply 处理） */
+function relang(){
+  if(screen==='game' && L) renderGame();
+  else show(screen);
+}
+$('#btnSettings').onclick=openSettings;
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape'){ if(!$('#modal').hidden) closeModal(); else if(screen!=='home' && screen!=='game') show('home'); }
   if(screen==='game' && (e.ctrlKey||e.metaKey) && e.key==='z'){ e.preventDefault(); undo(); }
