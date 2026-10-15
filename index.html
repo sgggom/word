@@ -12,6 +12,8 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="skins.css">
 <link rel="stylesheet" href="skins-classic.css">
+<link rel="stylesheet" href="skins-wood.css">
+<link rel="stylesheet" href="skins-photo.css">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/app-icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/app-icon-192.png">
 <link rel="apple-touch-icon" href="assets/app-icon-180.png">
@@ -23,7 +25,10 @@
     {id:'typewriter', name:'复古打字机', icon:'A', font:'Special+Elite&family=Courier+Prime:wght@400;700'},
     {id:'keyboard', name:'键盘', icon:'A', font:'JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@400;700'},
     {id:'glass', name:'液态玻璃', icon:'A', font:'Inter:wght@400;600;700&family=Noto+Sans+SC:wght@400;700'},
-    {id:'cartoon', name:'卡通', icon:'A', font:'Fredoka:wght@500;700&family=ZCOOL+KuaiLe'}
+    {id:'cartoon', name:'卡通', icon:'A', font:'Fredoka:wght@500;700&family=ZCOOL+KuaiLe'},
+    {id:'wood', name:'木纹', icon:'Aa', font:'Alegreya:wght@500;700'},
+    {id:'kyoto', name:'京都', icon:'A', font:'Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;700'},
+    {id:'alps', name:'阿尔卑斯', icon:'A', font:'Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;700'}
   ];
   window.applySkin = function(id){
     var sk = SKINS.filter(function(x){ return x.id === id; })[0] || SKINS[0];
@@ -53,6 +58,14 @@
     <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.5h2M11 16.5h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow-r" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="7" ry="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2a6 6 0 0 0 0 11.6M14 6.2a6 6 0 0 1 0 11.6" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12.5H6zM9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pack" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0v11H6zM9.5 4.2V3.5h5v.7M6 13h12M10 13v2.5h4V13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
     <symbol id="fleuron" viewBox="0 0 64 16"><path d="M2 8h18M44 8h18" stroke="currentColor" stroke-width="1"/><circle cx="23" cy="8" r="1.4" fill="currentColor"/><circle cx="41" cy="8" r="1.4" fill="currentColor"/><path d="M32 1c4 3 4 11 0 14c-4-3-4-11 0-14z" fill="currentColor"/></symbol>
   </defs>
 </svg>
@@ -91,19 +104,32 @@
   <section id="home" class="screen active">
     <div class="cover">
       <div class="cover-frame">
+        <!-- 实景皮肤（京都 / 阿尔卑斯）专用的封面元素，其它皮肤隐藏 -->
+        <div class="ph ph-brand">WordTile</div>
+        <div class="ph ph-hero">
+          <div class="ph-cap"><span class="ph-country"></span> · CHAPTER <span id="phChap">01</span></div>
+          <div class="ph-place"></div>
+          <div class="ph-rule"></div>
+          <div class="ph-count" id="phCount">1 / 20</div>
+        </div>
+        <div class="ph ph-side">
+          <button class="ph-round" id="phSet" aria-label="设置" data-i18n-aria="aria.settings"><svg><use href="#i-gear"/></svg></button>
+          <button class="ph-round" id="phDaily" aria-label="每日一页" data-i18n-aria="cover.daily"><svg><use href="#i-cal"/></svg></button>
+          <button class="ph-round ph-dict" id="phDict" aria-label="我的词典" data-i18n-aria="cover.dict"><svg><use href="#i-book"/></svg><span data-i18n="ph.dict">词典</span></button>
+        </div>
         <div class="cover-orn"><svg class="fleuron" aria-hidden="true"><use href="#fleuron"/></svg></div>
         <h1 class="cover-title" data-i18n-html="cover.title">字&nbsp;页</h1>
         <div class="cover-sub" data-i18n-html="cover.sub">WORD&nbsp;&nbsp;TILES</div>
         <div class="cover-rule"></div>
         <p class="cover-tag" id="coverTag">一本关于字母的安静小书</p>
         <div class="cover-actions">
-          <button class="plate primary" id="btnContinue"><span class="plate-main" data-i18n="cover.continue">继续阅读</span><span class="plate-sub" id="contSub">第 1 页</span></button>
+          <button class="plate primary" id="btnContinue"><span class="plate-main" data-i18n="cover.continue">继续阅读</span><span class="plate-sub" id="contSub">第 1 页</span><span class="ph ph-cont-lvl">LEVEL <span class="phLvl">01</span></span><span class="ph ph-cont-main" data-i18n="ph.continue">继续旅程</span><span class="ph ph-bar"><i id="phBar"></i></span><span class="ph ph-bar-n" id="phBarN">1 / 20</span><span class="ph ph-go"><svg class="k"><use href="#i-arrow-r"/></svg><svg class="a"><use href="#i-chev-r"/></svg></span></button>
           <button class="plate" id="btnToc" data-i18n="cover.toc">目 录</button>
           <button class="plate" id="btnDaily" data-i18n="cover.daily">每日一页</button>
           <button class="plate" id="btnDict" data-i18n="cover.dict">我的词典</button>
         </div>
         <div class="cover-foot">
-          <span class="ink-count"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
+          <span class="ink-count"><svg><use href="#i-drop"/></svg><svg class="ph-coin"><use href="#i-coin"/></svg><b class="ink-val">0</b></span>
           <button class="icon-btn light" id="btnSettings" aria-label="设置" data-i18n-aria="aria.settings"><svg><use href="#i-gear"/></svg></button>
         </div>
       </div>
@@ -228,13 +254,22 @@
   <section id="game" class="screen">
     <div class="book-wrap">
       <div class="book" id="book">
+        <div class="ph ph-ghead">
+          <div class="ph-gbar">
+            <button class="ph-round ph-back" data-back aria-label="返回" data-i18n-aria="aria.back"><svg><use href="#i-chev-l"/></svg></button>
+            <span class="ph-gbar-lvl">LEVEL <span class="phLvl">01</span></span>
+            <span class="ink-count ph-gcoin"><svg class="ph-coin"><use href="#i-coin"/></svg><b class="ink-val">0</b></span>
+          </div>
+          <div class="ph-gtitle">LEVEL <span class="phLvl">01</span></div>
+          <div class="ph-gplace"></div>
+        </div>
         <div class="page left" id="pageL">
           <header class="run-head">
             <button class="icon-btn" id="btnMenu" aria-label="目录" data-i18n-aria="aria.toc"><svg><use href="#i-book"/></svg></button>
             <span class="chap" id="chapTitle"></span>
             <span class="ink-count mobile-only"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
           </header>
-          <div class="list-title"><span data-i18n-html="game.words">词&nbsp;表</span><button class="info-btn" id="btnInfo" title="本页信息" data-i18n="game.info" data-i18n-title="game.info">本页信息</button><i id="listProg">0 / 0</i></div>
+          <div class="list-title"><span data-i18n-html="game.words">词&nbsp;表</span><button class="info-btn" id="btnInfo" title="本页信息" data-i18n="game.info" data-i18n-title="game.info">本页信息</button><i id="listProg">0 / 0</i><i class="ph ph-words" data-i18n="ph.words">words</i></div>
           <div class="words" id="words"></div>
           <div class="info" id="info" hidden></div>
           <div class="footnote" id="footnote"></div>
@@ -253,7 +288,7 @@
           </div>
           <nav class="toolbar">
             <button class="stamp" id="btnUndo" aria-label="撤回" data-i18n-aria="tool.undo"><svg><use href="#i-undo"/></svg><span data-i18n="tool.undo">撤回</span></button>
-            <button class="stamp" id="btnExtras" aria-label="页边批注" data-i18n-aria="tool.notesAria"><svg><use href="#i-notes"/></svg><span data-i18n="tool.notes">批注</span><em class="badge" id="extraBadge">0</em></button>
+            <button class="stamp" id="btnExtras" aria-label="页边批注" data-i18n-aria="tool.notesAria"><svg><use href="#i-notes"/></svg><svg class="ph-bagi"><use href="#i-bag"/></svg><svg class="ph-packi"><use href="#i-pack"/></svg><span data-i18n="tool.notes">批注</span><b class="ph ph-extra" data-i18n="ph.extra">额外词</b><em class="badge" id="extraBadge">0</em></button>
             <button class="stamp" id="btnHint" aria-label="提示" data-i18n-aria="tool.hint"><svg><use href="#i-feather"/></svg><span data-i18n="tool.hint">提示</span><em class="cost">20</em></button>
             <button class="stamp" id="btnFire" aria-label="烟花" data-i18n-aria="tool.fire"><svg><use href="#i-spark"/></svg><span data-i18n="tool.fire">烟花</span><em class="cost">60</em></button>
           </nav>

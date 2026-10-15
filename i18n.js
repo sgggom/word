@@ -167,7 +167,8 @@ zh: {
   'reset.toast':'已清空',
   'cancel':'取消',
   'skin.book':'书页', 'skin.classic':'典藏', 'skin.typewriter':'复古打字机',
-  'skin.keyboard':'键盘', 'skin.glass':'液态玻璃', 'skin.cartoon':'卡通',
+  'skin.keyboard':'键盘', 'skin.glass':'液态玻璃', 'skin.cartoon':'卡通', 'skin.wood':'木纹', 'skin.kyoto':'京都', 'skin.alps':'阿尔卑斯',
+  'ph.continue':'继续旅程', 'ph.dict':'词典', 'ph.extra':'额外词', 'ph.words':'words',
 
   /* 关卡编辑器 */
   'ed.title':'关卡编辑器',
@@ -382,7 +383,8 @@ en: {
   'reset.toast':'Progress reset',
   'cancel':'Cancel',
   'skin.book':'Pages', 'skin.classic':'Heirloom', 'skin.typewriter':'Typewriter',
-  'skin.keyboard':'Keyboard', 'skin.glass':'Liquid Glass', 'skin.cartoon':'Cartoon',
+  'skin.keyboard':'Keyboard', 'skin.glass':'Liquid Glass', 'skin.cartoon':'Cartoon', 'skin.wood':'Wood', 'skin.kyoto':'Kyoto', 'skin.alps':'Alps',
+  'ph.continue':'Continue journey', 'ph.dict':'Dictionary', 'ph.extra':'Extras', 'ph.words':'words',
 
   'ed.title':'Level Editor',
   'ed.esc':'Esc to exit',

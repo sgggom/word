@@ -323,8 +323,9 @@ html[data-skin="cartoon"] .pg.done{background:#95d5b2}
 
 /* =========================== 设置里的皮肤选择 =========================== */
 .skins{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 6px}
-.skin-opt{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);padding:6px 2px;border-radius:8px;border:1.5px solid transparent}
+.skin-opt{transition:border-color .25s,color .25s,transform .25s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);padding:6px 2px;border-radius:8px;border:1.5px solid transparent}
 .skin-opt.on{border-color:var(--ink);color:var(--ink)}
+.skin-opt:active{transform:scale(.96)}
 .skin-opt i{width:42px;height:42px;border-radius:9px;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:18px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .skin-opt i.book{background:#f3ead6;color:#2b2118;font-family:"EB Garamond",serif;box-shadow:0 0 0 1px #cdb994,0 3px 0 #c2ac82}
 .skin-opt i.classic{background:linear-gradient(135deg,#5a1f1b,#3d1210);color:#e2c37a;font-family:"EB Garamond",serif;box-shadow:inset 0 0 0 2px #3d1210,inset 0 0 0 3px #b08a3e,0 3px 6px rgba(0,0,0,.3)}
