@@ -1,0 +1,486 @@
+/* =========================== 实景磨砂玻璃：京都 / 阿尔卑斯 =========================== */
+/* 照片铺满背景，面板与字块是带颗粒的磨砂玻璃：模糊 + 白色雾面 + 细噪点 + 高光描边。
+   两套皮肤共用结构，只在变量里区分配色与背景取景。 */
+html[data-skin="kyoto"]{
+  --paper:#f7f8f6; --paper-2:rgba(255,255,255,.4); --paper-edge:rgba(255,255,255,.6);
+  --ink:#1c2520; --ink-soft:#46524b; --ink-faint:#7f8b84; --rule:rgba(28,48,38,.16);
+  --red:#c23a5e; --red-soft:#d9668a; --gold:#b8873a; --gold-hi:#e9c27a; --ok:#2f6b45; --pencil:#8c9690;
+  --accent:#24452f; --accent-ink:#f2f6f1;
+  --photo:url("assets/bg-kyoto.jpg");
+  /* 竖屏时把宝塔留在画面左下，樱花在右 */
+  --photo-pos:42% 60%;
+  --frost-tint:rgba(255,255,255,.2); --frost-tint-2:rgba(255,255,255,.08);
+  --frost-strong:rgba(255,255,255,.36);
+  --tile-bg:rgba(255,255,255,.6); --tile-bg-2:rgba(255,255,255,.4);
+  --shadow-c:rgba(30,50,40,.18);
+  --tile-r:.12;
+}
+html[data-skin="alps"]{
+  --paper:#f6f4f1; --paper-2:rgba(255,255,255,.4); --paper-edge:rgba(255,255,255,.6);
+  --ink:#232a33; --ink-soft:#4b5562; --ink-faint:#86909b; --rule:rgba(35,45,60,.16);
+  --red:#c0662e; --red-soft:#d98a52; --gold:#c0883a; --gold-hi:#f1c983; --ok:#3d7258; --pencil:#8a939d;
+  --accent:#ffffff; --accent-ink:#232a33;
+  --photo:url("assets/bg-alps.jpg");
+  /* 竖屏时取主峰与云海 */
+  --photo-pos:60% 50%;
+  --frost-tint:rgba(255,255,255,.16); --frost-tint-2:rgba(255,255,255,.05);
+  --frost-strong:rgba(255,255,255,.32);
+  --tile-bg:rgba(255,255,255,.52); --tile-bg-2:rgba(255,255,255,.32);
+  --shadow-c:rgba(40,50,70,.22);
+  --tile-r:.16;
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]){
+  --noise:none; --fibers:none;
+  --serif-en:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif-zh:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  /* 磨砂颗粒：细密的灰度噪点，叠在雾面之上，让玻璃不再是“液态”的光滑感 */
+  --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .38 -.16'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --grain-dark:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .2  0 0 0 0 .22  0 0 0 0 .24  0 0 0 .32 -.18'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --frost:var(--grain),var(--grain-dark),linear-gradient(160deg,var(--frost-tint),var(--frost-tint-2));
+  --frost-blur:blur(12px) saturate(165%) brightness(1.06);
+  --frost-edge:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(255,255,255,.5),inset 1px 0 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(255,255,255,.2);
+}
+
+/* 背景照片：单独一层，模糊玻璃才有东西可透 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) body{
+  background:#9bb3c8;
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:var(--photo) var(--photo-pos)/cover no-repeat;
+}
+/* 顶部和底部各压一层轻微的光，保证文字在天空和地面上都读得清 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) body::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 28%,rgba(255,255,255,0) 72%,rgba(255,255,255,.18));
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) #app{z-index:1}
+
+/* ---------- 通用磨砂面板 ---------- */
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(.page,.sheet,.modal-card,.toast,.tip,.done-card){
+  background:var(--frost);background-size:160px 160px,160px 160px,auto;
+  -webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur);
+  box-shadow:var(--frost-edge),0 18px 50px var(--shadow-c);border:0;color:var(--ink);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .sheet,
+html:is([data-skin="kyoto"],[data-skin="alps"]) .modal-card{border-radius:24px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .modal-card{background-image:var(--grain),var(--grain-dark),linear-gradient(160deg,var(--frost-strong),var(--frost-tint))}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .modal{background:rgba(20,28,34,.28);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .toast{border-radius:18px;background-image:var(--grain),linear-gradient(160deg,var(--frost-strong),var(--frost-tint))}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tip{border-radius:14px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tip::before{color:var(--red)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .done-card{background-image:var(--grain),var(--grain-dark),linear-gradient(160deg,var(--frost-strong),var(--frost-tint));-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .done-card .seal{border-color:var(--red);color:var(--red)}
+
+/* 书：两页分成两块玻璃卡片 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .book{filter:none;gap:14px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(.run-head,.list-title,.footnote,.folio,.info){text-shadow:0 0 6px rgba(255,255,255,.75)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .book::before{display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .page{border-radius:24px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .run-head,
+html:is([data-skin="kyoto"],[data-skin="alps"]) .sheet-head{border-bottom-color:var(--rule);letter-spacing:.12em}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .run-head .lvl{font-weight:700;letter-spacing:.14em}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .list-title{letter-spacing:.18em;font-size:13px;color:var(--ink-soft)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .list-title i{font-style:normal;font-size:13px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .folio{font-size:12px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tag-hard{border-radius:8px}
+
+/* 词表：每个字母是一枚小玻璃方块，未找到时是半透明的空格 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .w{gap:4px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .w .lt{
+  border:0;border-radius:4px;place-items:center;padding:0;
+  height:calc(var(--lw,26px) * 1.06);font-size:calc(var(--lw,26px) * .6);font-weight:700;
+  background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.55);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .w.found .lt{
+  background:var(--grain-dark),rgba(255,255,255,.7);background-size:160px 160px,auto;
+  box-shadow:inset 0 1px 0 #fff,0 1px 2px var(--shadow-c),0 3px 8px var(--shadow-c);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .w .lt.rev{color:var(--pencil);font-style:normal}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .w.found:hover .lt{color:var(--red)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .w .num{font-style:normal}
+
+/* 当前单词 / 飞字 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cur-word{font-style:normal;font-weight:700;letter-spacing:.16em;text-shadow:0 1px 0 rgba(255,255,255,.7),0 2px 18px rgba(255,255,255,.8)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cur-word.extra{color:var(--accent-ink)}
+html[data-skin="kyoto"] .cur-word.extra{color:var(--accent)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .fly{font-style:normal;font-weight:700;color:var(--ink);text-shadow:0 0 12px rgba(255,255,255,.9)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .fly.ok{color:var(--ok)}
+
+/* ---------- 字块：磨砂玻璃方砖 ---------- */
+/* 字块背后垫一块玻璃托盘（伪元素，不影响点击坐标计算） */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .grid::before{
+  content:"";position:absolute;inset:calc(var(--gap)*-1.6);z-index:-1;border-radius:calc(var(--tile)*.34);
+  background:var(--grain),linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.04));background-size:160px 160px,auto;
+  -webkit-backdrop-filter:blur(10px) saturate(160%);backdrop-filter:blur(10px) saturate(160%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 0 0 1px rgba(255,255,255,.3),0 14px 40px var(--shadow-c);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .grid{isolation:isolate}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tile{
+  border-radius:calc(var(--tile)*var(--tile-r));
+  background:var(--grain-dark),linear-gradient(165deg,var(--tile-bg),var(--tile-bg-2));background-size:160px 160px,auto;
+  -webkit-backdrop-filter:blur(10px) saturate(160%);backdrop-filter:blur(10px) saturate(160%);
+  color:var(--ink);font-family:var(--serif-en);font-weight:700;font-size:calc(var(--tile)*.46);
+  text-shadow:0 1px 0 rgba(255,255,255,.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 0 0 1px rgba(255,255,255,.5),
+    inset 0 -2px 6px rgba(255,255,255,.25),
+    0 1px 2px var(--shadow-c),
+    0 calc(var(--tile)*.08) calc(var(--tile)*.22) var(--shadow-c);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tile .cnt{
+  color:var(--ink);font-style:normal;font-weight:600;font-family:var(--serif-en);
+  font-size:calc(var(--tile)*.16);top:calc(var(--tile)*.08);right:calc(var(--tile)*.1);opacity:.75;
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tile.sel{
+  transform:scale(.94);color:var(--accent-ink);
+  background:var(--grain),linear-gradient(165deg,color-mix(in srgb,var(--accent) 88%,#fff),var(--accent));background-size:160px 160px,auto;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 0 3px rgba(255,255,255,.55),0 6px 18px var(--shadow-c);
+}
+html[data-skin="alps"] .tile.sel{
+  background:var(--grain-dark),linear-gradient(165deg,#fff,rgba(255,255,255,.9));background-size:160px 160px,auto;
+  box-shadow:inset 0 1px 0 #fff,0 0 0 3px rgba(255,255,255,.6),0 0 26px rgba(255,255,255,.75);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tile.sel .cnt{color:inherit}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tile.spent{
+  border:1.5px dashed rgba(255,255,255,.6);background:rgba(255,255,255,.08);
+  -webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tile.curt{
+  background:var(--grain),repeating-linear-gradient(45deg,rgba(255,255,255,.42) 0 3px,rgba(255,255,255,.16) 3px 9px);
+  background-size:160px 160px,auto;
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .curt-num b{background:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 2px rgba(255,255,255,.6),0 4px 10px var(--shadow-c)}
+@keyframes hglow-frost{50%{box-shadow:0 0 0 3px #fff,0 0 22px rgba(255,255,255,.95),0 0 40px var(--gold-hi)}}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tile.hint-glow{animation:hglow-frost 1.4s ease 2}
+
+/* ---------- 按钮 ---------- */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .stamp{color:var(--ink);letter-spacing:.08em;font-weight:600}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .stamp>span{text-shadow:0 0 6px #fff,0 0 3px #fff,0 0 1px #fff}
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(#btnHint,#btnFire){color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(#btnHint,#btnFire) svg{color:var(--red)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .stamp svg{
+  border:0;outline:0;
+  background:var(--grain),linear-gradient(160deg,var(--frost-strong),var(--frost-tint));background-size:160px 160px,auto;
+  -webkit-backdrop-filter:blur(10px) saturate(160%);backdrop-filter:blur(10px) saturate(160%);
+  box-shadow:var(--frost-edge),0 6px 18px var(--shadow-c);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .stamp .badge{background:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 2px rgba(255,255,255,.75)}
+html[data-skin="alps"] .stamp .badge{background:var(--red);color:#fff}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .stamp .cost{background:rgba(255,255,255,.88);border:0;box-shadow:0 2px 6px var(--shadow-c)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .stamp .cost::before{background:var(--ink-soft)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ink-count svg{color:var(--ink)}
+
+html:is([data-skin="kyoto"],[data-skin="alps"]) .plate{
+  border-radius:16px;color:var(--ink);letter-spacing:.12em;
+  background:var(--grain),var(--grain-dark),linear-gradient(160deg,var(--frost-strong),var(--frost-tint));background-size:160px 160px,160px 160px,auto;
+  -webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur);
+  box-shadow:var(--frost-edge),0 8px 24px var(--shadow-c);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .plate-sub{color:var(--ink-soft);letter-spacing:.14em;font-size:11px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(.plate.primary,.modal-btns .plate.primary,.ed-actions .plate.primary){
+  background:var(--grain),linear-gradient(160deg,color-mix(in srgb,var(--accent) 85%,#fff),var(--accent));background-size:160px 160px,auto;
+  color:var(--accent-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 24px var(--shadow-c);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .plate.primary .plate-sub{color:color-mix(in srgb,var(--accent-ink) 72%,transparent)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .modal-btns .plate{box-shadow:var(--frost-edge),0 4px 12px var(--shadow-c)}
+
+/* ---------- 封面：照片当封面，标题直接压在天空上，按钮是玻璃卡片 ---------- */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover{background:none;box-shadow:none;padding:28px 24px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover::before{display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-frame{border:0;outline:0;color:var(--ink);justify-content:flex-start;align-items:flex-start;text-align:left;padding:4vh 4px 0}
+html[data-skin="alps"] .cover-frame{align-items:center;text-align:center}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-actions{align-self:center}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-orn{display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-title{
+  background:none;-webkit-text-fill-color:currentColor;color:var(--ink);
+  font-family:var(--serif-zh);font-weight:700;letter-spacing:.06em;
+  filter:drop-shadow(0 2px 14px rgba(255,255,255,.7));
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-sub{letter-spacing:.42em;font-size:12px;color:var(--ink-soft);order:-1;margin:0 0 10px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-rule{width:26px;height:2px;margin:16px 0 10px;background:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-tag{color:var(--ink-soft);opacity:1;letter-spacing:.12em;text-shadow:0 0 8px rgba(255,255,255,.9),0 0 2px rgba(255,255,255,.9)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-sub{text-shadow:0 0 8px rgba(255,255,255,.9)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-actions{margin-top:auto;width:min(340px,100%)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-actions .plate.primary{min-height:64px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(.cover-foot .ink-count,.icon-btn.light,.cover-foot .ink-count svg){color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-foot .icon-btn.light{
+  background:var(--grain),linear-gradient(160deg,var(--frost-strong),var(--frost-tint));background-size:160px 160px,auto;
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:var(--frost-edge),0 4px 14px var(--shadow-c);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-foot .ink-count{
+  padding:4px 12px;border-radius:16px;font-size:15px;
+  background:rgba(255,255,255,.26);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(14px);box-shadow:var(--frost-edge);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .icon-btn:hover{background:rgba(255,255,255,.4)}
+
+/* ---------- 目录 / 词典 / 编辑器的小控件 ---------- */
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(.chip,.ed-btn,.vol){background:rgba(255,255,255,.45);border-color:rgba(255,255,255,.7);color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .vol{border-radius:14px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .vol.on{background:rgba(255,255,255,.82);border-color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .pg{border-color:rgba(255,255,255,.75);background:rgba(255,255,255,.3)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .pg.done{background:rgba(255,255,255,.75);color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .pg.cur{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+html[data-skin="alps"] .pg.cur{background:var(--ink);color:#fff;border-color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(.info-btn:hover,.info-btn.on,.seg button.on,.switch.on){background:var(--ink);color:#fff;border-color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .seg,html:is([data-skin="kyoto"],[data-skin="alps"]) .info-btn{border-radius:10px;border-color:var(--rule)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .switch{background:rgba(30,40,50,.18)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .switch::after{background:#fff}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .text-btn{color:var(--red)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ed-tile input{
+  border-radius:10px;color:var(--ink);font-family:var(--serif-en);font-weight:700;
+  background:var(--grain-dark),linear-gradient(165deg,var(--tile-bg),var(--tile-bg-2));background-size:160px 160px,auto;
+  box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(255,255,255,.5),0 6px 14px var(--shadow-c);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ed-tile.empty input{background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6)}
+
+/* ---------- 设置里的皮肤图标：照片缩略图 + 一枚磨砂字块 ---------- */
+.skin-opt i.kyoto,.skin-opt i.alps{
+  position:relative;overflow:hidden;color:#1c2520;font-family:"Inter",system-ui,sans-serif;font-size:15px;
+  background:url("assets/bg-kyoto-thumb.jpg") 70% center/cover;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.6),0 3px 8px rgba(0,0,0,.25);
+}
+.skin-opt i.alps{background-image:url("assets/bg-alps-thumb.jpg");background-position:60% center}
+.skin-opt i.kyoto::before,.skin-opt i.alps::before{
+  content:"";position:absolute;inset:9px;border-radius:5px;z-index:0;
+  background:rgba(255,255,255,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  box-shadow:inset 0 1px 0 #fff,0 2px 4px rgba(0,0,0,.2);
+}
+.skin-opt i.kyoto::after,.skin-opt i.alps::after{content:"A";position:relative;z-index:1}
+.skin-opt i.kyoto,.skin-opt i.alps{font-size:0}
+.skin-opt i.kyoto::after,.skin-opt i.alps::after{font-size:15px}
+
+/* ---------- 窄屏：词表与字盘各一块玻璃卡片，照片从缝隙里透出来 ---------- */
+@media (max-width: 820px){
+  html:is([data-skin="kyoto"],[data-skin="alps"])[data-skin] .book{background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;gap:0}
+  html:is([data-skin="kyoto"],[data-skin="alps"])[data-skin] .book .page{background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+  html:is([data-skin="kyoto"],[data-skin="alps"])[data-skin] .book .page.left{
+    margin:calc(10px + env(safe-area-inset-top)) 12px 6px;padding:6px 14px 12px;border-radius:20px;
+    background:var(--frost);background-size:160px 160px,160px 160px,auto;
+    -webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur);
+    box-shadow:var(--frost-edge),0 12px 34px var(--shadow-c);
+  }
+  html:is([data-skin="kyoto"],[data-skin="alps"])[data-skin] .book .page.right{padding:0 16px}
+  html:is([data-skin="kyoto"],[data-skin="alps"]) .run-head{min-height:40px}
+  html:is([data-skin="kyoto"],[data-skin="alps"])[data-skin] .sheet{border-radius:0}
+  html:is([data-skin="kyoto"],[data-skin="alps"]) .cover{padding:calc(22px + env(safe-area-inset-top)) 20px calc(18px + env(safe-area-inset-bottom))}
+  html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-actions{width:100%}
+}
+
+/* 不支持 backdrop-filter 的浏览器：加厚雾面兜底 */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  html:is([data-skin="kyoto"],[data-skin="alps"]){--frost-tint:rgba(255,255,255,.82);--frost-tint-2:rgba(255,255,255,.72);--tile-bg:rgba(255,255,255,.92);--tile-bg-2:rgba(255,255,255,.85)}
+}
+
+/* =========================== 实景皮肤：按参考图的版式 =========================== */
+/* .ph 系列元素只在京都 / 阿尔卑斯里出现 */
+.ph,.ph-coin,.ph-bagi,.ph-packi{display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]){
+  --ui:"Inter","SF Pro Display",-apple-system,system-ui,"Segoe UI",sans-serif;
+  --serif-en:var(--ui);
+  --serif-zh:"Inter","PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+  /* 更通透的白雾玻璃：更强的模糊 + 偏白的雾面 + 1px 亮边 + 柔和投影 */
+  --glass:linear-gradient(160deg,rgba(255,255,255,.52),rgba(255,255,255,.34));
+  --glass-soft:linear-gradient(160deg,rgba(255,255,255,.36),rgba(255,255,255,.2));
+  --glass-blur:blur(22px) saturate(150%);
+  --glass-edge:inset 0 0 0 1px rgba(255,255,255,.55),inset 0 1px 0 rgba(255,255,255,.8);
+  --glass-shadow:0 10px 30px rgba(30,45,60,.14);
+}
+html[data-skin="kyoto"]{--accent:#24472f;--accent-ink:#fff;--ph-badge:#24472f;--ph-num:#2f6b45}
+html[data-skin="alps"]{--ph-badge:#2a2f36;--ph-num:#8a9099}
+html:is([data-skin="kyoto"],[data-skin="alps"]) body{font-family:var(--ui)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(.ph-cap,.ph-place,.ph-count,.ph-brand,.ph-gtitle,.ph-gplace,.ph-gbar-lvl,.list-title,.ink-count){text-shadow:none}
+
+/* 共用：圆形磨砂按钮 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-round,
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-foot .ink-count,
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-gcoin{
+  background:var(--glass);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-edge),var(--glass-shadow);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-round{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-round svg{width:24px;height:24px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-coin{display:block;width:20px;height:20px;color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ink-count svg:not(.ph-coin){display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ink-count{font-family:var(--ui);font-size:16px;font-weight:500;color:var(--ink);gap:8px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ink-count b{font-weight:500}
+html[data-skin="alps"] .ph-coin{width:24px;height:24px}
+html[data-skin="alps"] .ph-coin use{}
+
+/* ---------- 封面 ---------- */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover{padding:calc(26px + env(safe-area-inset-top)) 22px calc(26px + env(safe-area-inset-bottom))}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-frame{position:relative;padding:0;justify-content:flex-start}
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(.cover-title,.cover-sub,.cover-rule,.cover-tag,#btnToc,#btnDaily,#btnDict){display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(.ph-brand,.ph-hero,.ph-side){display:flex}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-brand{font-family:var(--ui);font-weight:700;font-size:24px;letter-spacing:-.01em;color:var(--ink);line-height:1}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-hero{flex-direction:column;color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-cap{font-size:12px;font-weight:500;letter-spacing:.2em;color:var(--ink-soft);text-transform:uppercase}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-place{font-weight:800;letter-spacing:-.02em;line-height:1.05;color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-rule{width:22px;height:2px;background:var(--ink);margin:14px 0 12px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-count{font-size:15px;font-weight:500;letter-spacing:.12em;color:var(--ink-soft)}
+html[data-skin="kyoto"] .ph-country::before{content:"JAPAN"}
+html[data-skin="alps"] .ph-country::before{content:"ITALY"}
+html[data-skin="kyoto"] .ph-place::before{content:"Kyoto"}
+html[data-skin="alps"] .ph-place::before{content:"Alps"}
+/* 封面右上：金币 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-foot{position:absolute;top:0;right:0;width:auto;margin:0;padding:0;gap:14px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-foot .ink-count{height:44px;padding:0 16px 0 14px;border-radius:22px}
+
+/* 继续按钮：磨砂卡片 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-actions{margin-top:auto;width:100%}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .cover-actions .plate.primary{
+  position:relative;display:grid;align-items:center;justify-items:start;text-align:left;
+  background:var(--glass);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-edge),var(--glass-shadow);color:var(--ink);letter-spacing:0;
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) #btnContinue :is(.plate-main,.plate-sub){display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) #btnContinue :is(.ph-cont-lvl,.ph-cont-main,.ph-go){display:block}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-cont-lvl{font-size:13px;font-weight:500;letter-spacing:.2em;color:var(--ink-soft)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-cont-main{font-family:var(--serif-zh);font-weight:700;color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-go svg{display:none}
+
+/* ======== 京都封面 ======== */
+html[data-skin="kyoto"] .ph-brand{position:absolute;left:4px;top:12px}
+html[data-skin="kyoto"] .ph-hero{margin-top:calc(16vh + 40px);padding-left:4px;align-items:flex-start}
+html[data-skin="kyoto"] .ph-place{font-size:56px;margin-top:6px}
+html[data-skin="kyoto"] .ph-side{position:absolute;right:0;top:calc(44px + 6vh);flex-direction:column;gap:22px}
+html[data-skin="kyoto"] #btnSettings{display:none}
+html[data-skin="kyoto"] .ph-dict span{display:none}
+html[data-skin="kyoto"] .cover-actions .plate.primary{
+  min-height:0;border-radius:22px;padding:20px 22px 22px 24px;
+  grid-template-columns:1fr auto;grid-template-areas:"lvl go" "main go" "bar n";column-gap:16px;
+}
+html[data-skin="kyoto"] .ph-cont-lvl{grid-area:lvl}
+html[data-skin="kyoto"] .ph-cont-main{grid-area:main;font-size:27px;margin:4px 0 14px}
+html[data-skin="kyoto"] #btnContinue .ph-bar{display:block;grid-area:bar;justify-self:stretch;height:5px;border-radius:3px;background:rgba(30,45,38,.12);overflow:hidden}
+html[data-skin="kyoto"] .ph-bar i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+html[data-skin="kyoto"] #btnContinue .ph-bar-n{display:block;grid-area:n;font-size:13px;letter-spacing:.1em;color:var(--ink-soft);justify-self:end}
+html[data-skin="kyoto"] .ph-go{grid-area:go;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;display:grid!important;place-items:center;box-shadow:0 6px 16px rgba(20,50,30,.3)}
+html[data-skin="kyoto"] .ph-go svg.k{display:block;width:24px;height:24px}
+
+/* ======== 阿尔卑斯封面 ======== */
+html[data-skin="alps"] .cover-frame{align-items:center;text-align:center}
+html[data-skin="alps"] .ph-brand{margin-top:70px;font-size:26px;font-weight:600;letter-spacing:.06em}
+html[data-skin="alps"] .ph-hero{margin-top:56px;align-items:center}
+html[data-skin="alps"] .ph-place{font-size:44px;margin-top:4px}
+html[data-skin="alps"] .ph-rule{margin:12px auto 12px}
+html[data-skin="alps"] .cover-foot .ink-count,
+html[data-skin="alps"] .cover-foot .icon-btn.light{background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;padding:0;height:auto}
+html[data-skin="alps"] .cover-foot{top:4px}
+html[data-skin="alps"] .cover-foot .icon-btn.light{width:32px;height:32px;font-size:24px}
+html[data-skin="alps"] .cover-foot .ink-count{font-size:17px}
+html[data-skin="alps"] .ph-side{position:static;display:contents}
+html[data-skin="alps"] #phSet{display:none}
+html[data-skin="alps"] #phDaily{position:absolute;left:0;top:4px;width:32px;height:32px;background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+html[data-skin="alps"] #phDict{order:10;margin-top:46px;width:auto;height:auto;border-radius:0;background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink);text-shadow:0 0 8px rgba(255,255,255,.7)}
+html[data-skin="alps"] #phDict svg{width:28px;height:28px;filter:drop-shadow(0 0 6px rgba(255,255,255,.6))}
+html[data-skin="alps"] .cover-actions{width:calc(100% - 18px);margin-bottom:0}
+html[data-skin="alps"] .cover-actions .plate.primary{
+  min-height:0;border-radius:16px;padding:16px 22px 14px 32px;
+  grid-template-columns:1fr auto;grid-template-areas:"main go" "lvl go";
+}
+html[data-skin="alps"] .ph-cont-main{grid-area:main;font-size:21px;margin-bottom:6px}
+html[data-skin="alps"] .ph-cont-lvl{grid-area:lvl;font-size:12px}
+html[data-skin="alps"] .ph-go{grid-area:go;color:var(--ink)}
+html[data-skin="alps"] .ph-go svg.a{display:block;width:22px;height:22px}
+
+/* ---------- 关卡页 ---------- */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-ghead{display:block;padding:calc(18px + env(safe-area-inset-top)) 20px 0;color:var(--ink)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-gbar{display:flex;align-items:center;justify-content:space-between}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-gcoin{height:42px;padding:0 16px 0 14px;border-radius:21px}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-gbar-lvl{display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .page.left .run-head{display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) #btnInfo,
+html:is([data-skin="kyoto"],[data-skin="alps"]) .list-title>span{display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .list-title{justify-content:flex-start;gap:.35em;margin:0 0 10px;letter-spacing:.02em;font-weight:500}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .list-title i{font-family:var(--ui);letter-spacing:.02em;color:inherit;font-size:inherit}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-words{display:inline}
+html[data-skin="kyoto"] .ph-gplace::before{content:"Kyoto · Japan"}
+html[data-skin="alps"] .ph-gplace::before{content:"Alps • Italy"}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .ph-gplace{color:var(--ink-soft);letter-spacing:.24em;font-size:13px}
+@media (max-width:820px){
+  html:is([data-skin="kyoto"],[data-skin="alps"])[data-skin] .book{grid-template-rows:auto auto 1fr}
+}
+/* 词表字母：磨砂小方块 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .w .lt{
+  border-radius:6px;font-family:var(--ui);font-weight:600;color:var(--ink);
+  background:rgba(255,255,255,.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .w.found .lt{background:rgba(255,255,255,.82);box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),0 2px 6px rgba(30,45,60,.1)}
+/* 字块：白雾方砖，计数小字 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tile{
+  background:linear-gradient(165deg,rgba(255,255,255,.78),rgba(255,255,255,.6));
+  -webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);
+  font-family:var(--ui);font-weight:700;color:#141a17;text-shadow:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.75),inset 0 1px 0 #fff,0 4px 14px rgba(30,45,60,.12);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tile .cnt{color:var(--ph-num);opacity:1;font-family:var(--ui);font-weight:600;font-size:calc(var(--tile)*.15)}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .tile.sel .cnt{color:inherit}
+/* 工具按钮：只留图标的圆形玻璃 */
+html:is([data-skin="kyoto"],[data-skin="alps"]) .stamp>span{display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .stamp svg{
+  width:60px;height:60px;padding:17px;color:var(--ink)!important;
+  background:var(--glass);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-edge),var(--glass-shadow);
+}
+html:is([data-skin="kyoto"],[data-skin="alps"]) #btnExtras svg:first-of-type{display:none}
+html:is([data-skin="kyoto"],[data-skin="alps"]) :is(.stamp .badge,.stamp .cost){background:var(--ph-badge);color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.8);top:-2px;right:-2px;font-family:var(--ui);font-weight:600}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .stamp .cost::before{background:#fff}
+html:is([data-skin="kyoto"],[data-skin="alps"]) .stamp:hover svg{transform:none}
+
+/* ======== 京都关卡 ======== */
+html[data-skin="kyoto"] .ph-back{width:48px;height:48px}
+html[data-skin="kyoto"] .ph-gtitle{display:block;margin:24px 0 0 6px;font-size:34px;font-weight:800;letter-spacing:.04em;line-height:1.1}
+html[data-skin="kyoto"] .ph-gplace{margin:4px 0 0 6px}
+html[data-skin="kyoto"][data-skin] .book .page.left{
+  margin:18px 88px 6px 22px;padding:14px 16px 16px;border-radius:18px;
+  background:var(--glass-soft);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-edge),var(--glass-shadow);
+}
+html[data-skin="kyoto"] .list-title{font-size:14px;color:var(--ink-soft)}
+html[data-skin="kyoto"] .words{justify-content:flex-start}
+html[data-skin="kyoto"][data-skin] .book .page.right{position:relative;padding:0 96px 0 22px}
+html[data-skin="kyoto"] .grid-wrap{justify-content:flex-start}
+html[data-skin="kyoto"] .grid::before{
+  background:var(--glass-soft);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-edge),var(--glass-shadow);border-radius:20px;
+}
+html[data-skin="kyoto"] .toolbar{position:absolute;right:16px;bottom:34%;flex-direction:column;gap:18px;padding:0}
+html[data-skin="kyoto"] .stamp{width:auto}
+html[data-skin="kyoto"] #btnFire,html[data-skin="kyoto"] #btnUndo{display:none}
+html[data-skin="kyoto"] .toolbar{flex-direction:column-reverse}
+html[data-skin="kyoto"] #btnFire{display:flex}
+/* 额外词：左下胶囊 */
+html[data-skin="kyoto"] #btnExtras{position:fixed;left:20px;bottom:calc(24px + env(safe-area-inset-bottom));flex-direction:row;align-items:center;gap:8px;
+  height:46px;padding:0 10px 0 16px;border-radius:23px;width:auto;
+  background:var(--glass);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-edge),var(--glass-shadow)}
+html[data-skin="kyoto"] #btnExtras svg{width:22px;height:22px;padding:0;background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+html[data-skin="kyoto"] #btnExtras .ph-bagi{display:block}
+html[data-skin="kyoto"] #btnExtras .ph-extra{display:inline;font-weight:500;font-size:14px;color:var(--ink);letter-spacing:.04em}
+html[data-skin="kyoto"] #btnExtras .badge{position:static}
+
+/* ======== 阿尔卑斯关卡 ======== */
+html[data-skin="alps"] .ph-ghead{text-align:center}
+html[data-skin="alps"] .ph-gbar{position:relative}
+html[data-skin="alps"] .ph-back{width:36px;height:36px;background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+html[data-skin="alps"] .ph-gbar-lvl{display:block;position:absolute;left:50%;transform:translateX(-50%);font-size:14px;font-weight:500;letter-spacing:.2em}
+html[data-skin="alps"] .ph-gcoin{background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0;font-size:19px}
+html[data-skin="alps"] .ph-gplace{margin-top:26px;font-size:13px;letter-spacing:.16em}
+html[data-skin="alps"][data-skin] .book .page.left{background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;margin:6px 16px 0;padding:0}
+html[data-skin="alps"] .list-title{justify-content:center;font-size:18px;color:var(--ink);letter-spacing:.06em}
+html[data-skin="alps"] .list-title i{letter-spacing:.06em}
+html[data-skin="alps"] .words{justify-content:center}
+html[data-skin="alps"] .grid::before{display:none}
+html[data-skin="alps"][data-skin] .book .page.right{position:relative;padding:0 16px}
+html[data-skin="alps"] .current{order:-2}
+html[data-skin="alps"] .toolbar{order:-1;justify-content:space-between;padding:0 18% 0;gap:0}
+html[data-skin="alps"] .stamp svg{width:58px;height:58px;padding:16px}
+html[data-skin="alps"] .stamp{width:auto}
+html[data-skin="alps"] #btnUndo{order:1}
+html[data-skin="alps"] #btnFire{order:2;margin-left:auto;margin-right:14px}
+html[data-skin="alps"] #btnHint{order:3}
+html[data-skin="alps"] #btnExtras{position:fixed;left:26px;bottom:calc(22px + env(safe-area-inset-bottom))}
+html[data-skin="alps"] #btnExtras .ph-packi{display:block}
+html[data-skin="alps"] .grid-wrap{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
+html[data-skin="alps"] .ph-gtitle{display:none}

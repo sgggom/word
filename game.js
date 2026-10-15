@@ -87,10 +87,36 @@ const sfx = {
   reveal(){ tone(1319,.25,'sine',.06); tone(1760,.3,'sine',.05,.08); },
 };
 
+/* ================= 过渡动画工具 ================= */
+const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE_OUT = 'cubic-bezier(.22,1,.36,1)';      // 入场：快起缓停
+const EASE_IN  = 'cubic-bezier(.55,0,.75,.2)';     // 退场：缓起快走
+/* 一组元素依次浮现 */
+function stagger(nodes, {delay=60, step=32, max=14, y=10, dur=520}={}){
+  if(calm() || !Element.prototype.animate) return;
+  [...nodes].filter(Boolean).slice(0, max).forEach((n,i)=>n.animate(
+    [{opacity:0, transform:`translateY(${y}px)`},{opacity:1, transform:'none'}],
+    {duration:dur, delay:delay+i*step, easing:EASE_OUT, fill:'backwards'}));
+}
+/* 高度展开 / 收起（open=true 展开）；done 在结束后调用 */
+function slide(el, open, done){
+  el.getAnimations().forEach(a=>a.cancel());
+  if(calm() || !el.animate){ done&&done(); return; }
+  const cs=getComputedStyle(el);
+  const full={height:el.offsetHeight+'px', paddingTop:cs.paddingTop, paddingBottom:cs.paddingBottom,
+    marginTop:cs.marginTop, marginBottom:cs.marginBottom, opacity:1, transform:'none'};
+  const zero={height:'0px', paddingTop:'0px', paddingBottom:'0px', marginTop:'0px', marginBottom:'0px', opacity:0, transform:'translateY(-6px)'};
+  el.style.overflow='hidden';
+  const a=el.animate(open?[zero,full]:[full,zero], {duration:open?420:300, easing:open?EASE_OUT:'cubic-bezier(.4,0,.2,1)'});
+  a.onfinish=()=>{ el.style.overflow=''; done&&done(); };
+}
+
 /* ================= 屏幕切换 ================= */
-let screen = 'home';
+/* 层级：封面 0，目录/每日/词典/编辑器 1，游戏 2；从深往浅为"返回" */
+const DEPTH = {home:0, toc:1, daily:1, dict:1, editor:1, game:2};
+let screen = null;
 function show(id){
-  screen = id;
+  const prev = screen; screen = id;
   $$('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
   updateInk();
   if(id==='home') renderHome();
@@ -98,6 +124,54 @@ function show(id){
   if(id==='daily') renderDaily();
   if(id==='dict') renderDict();
   if(id==='editor' && window.Editor) window.Editor.render();
+  if(prev!==id) transitScreen(prev, id);
+}
+/* 屏幕间过渡：旧屏保留显示并退场，新屏入场 */
+function transitScreen(prev, id){
+  const to=$('#'+id), from=prev?$('#'+prev):null;
+  $$('.screen').forEach(s=>{ if(s!==to && s!==from){ s.classList.remove('leaving'); s.style.zIndex=''; } });
+  const panelOf = s => s.firstElementChild;
+  [to, from].forEach(s=>{ if(s){ panelOf(s).getAnimations().forEach(a=>a.cancel()); s.classList.remove('leaving'); s.style.zIndex=''; } });
+  if(calm() || !to.animate) return;
+  const pIn=panelOf(to), back = from && DEPTH[id] < DEPTH[prev];
+  let kIn, kOut, oIn={duration:560, delay:70, easing:EASE_OUT, fill:'backwards'}, oOut={duration:320, easing:EASE_IN, fill:'forwards'};
+  if(!from){                                   // 首次打开
+    kIn=[{opacity:0, transform:'translateY(14px) scale(.98)'},{opacity:1, transform:'none'}];
+    oIn={...oIn, duration:800, delay:40};
+  } else if(prev==='home' && id==='game'){     // 翻开封面
+    kOut=[{opacity:1, transform:'none'},{opacity:0, transform:'perspective(1800px) rotateY(-32deg) translateX(-6%)'}];
+    kIn=[{opacity:0, transform:'scale(.95)'},{opacity:1, transform:'none'}];
+    oOut={...oOut, duration:460}; oIn={...oIn, duration:700, delay:160};
+  } else if(prev==='game' && id==='home'){     // 合上封面
+    kOut=[{opacity:1, transform:'none'},{opacity:0, transform:'scale(.95)'}];
+    kIn=[{opacity:0, transform:'perspective(1800px) rotateY(-32deg) translateX(-6%)'},{opacity:1, transform:'none'}];
+    oIn={...oIn, duration:700, delay:120};
+  } else if(back){                             // 返回：上层纸页下沉，下层从略大处归位
+    kOut=[{opacity:1, transform:'none'},{opacity:0, transform:'translateY(26px) scale(.985)'}];
+    kIn=[{opacity:0, transform:'scale(1.035)'},{opacity:1, transform:'none'}];
+    oIn={...oIn, delay:40};
+  } else {                                     // 前进：下层后退，新纸页自下浮起
+    kOut=[{opacity:1, transform:'none'},{opacity:0, transform:'scale(.96)'}];
+    kIn=[{opacity:0, transform:'translateY(30px) scale(.985)'},{opacity:1, transform:'none'}];
+  }
+  if(from){
+    from.classList.add('leaving');
+    from.style.zIndex = back ? 2 : 0;
+    const pOut=panelOf(from);
+    pOut.style.transformOrigin = prev==='home' ? 'left center' : '';
+    const a=pOut.animate(kOut, oOut);
+    a.onfinish=()=>{ from.classList.remove('leaving'); from.style.zIndex=''; pOut.style.transformOrigin=''; a.cancel(); };
+  }
+  pIn.style.transformOrigin = id==='home' && prev==='game' ? 'left center' : '';
+  pIn.animate(kIn, oIn).onfinish=()=>{ pIn.style.transformOrigin=''; };
+  // 内容依次浮现
+  const d=oIn.delay+120;
+  if(id==='home' && !from) stagger($$('.cover-frame > *'), {delay:d+80, step:70, y:8, dur:700});
+  else if(id==='home') stagger($$('.cover-actions > *'), {delay:d, step:45, y:8});
+  if(id==='toc') stagger($('#tocList').children, {delay:d, step:28, max:16});
+  if(id==='daily') stagger($$('.daily-body > *'), {delay:d, step:60});
+  if(id==='dict') stagger([$('.dict-search'), ...$('#dictList').children], {delay:d, step:22, max:18, y:6});
+  if(id==='editor') stagger($$('.ed-col'), {delay:d, step:90, y:12});
 }
 function updateInk(bump){
   $$('.ink-val').forEach(e=>e.textContent=save.coins);
@@ -108,8 +182,12 @@ function toast(msg){
   const t=$('#toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1600);
 }
+/* 弹窗：打开时遮罩淡入、卡片浮起；已打开时换内容做轻微交叉淡化；关闭时卡片下沉淡出 */
+let modalClosing=null;
 function modal({title, body, buttons=[], dismiss=true}){
-  const m=$('#modal');
+  const m=$('#modal'), card=m.firstElementChild;
+  const swap = !m.hidden;               // 已打开（或正在关闭）时直接换内容
+  if(modalClosing){ modalClosing.forEach(a=>a.cancel()); modalClosing=null; }
   $('#mTitle').textContent=title;
   const b=$('#mBody'); b.innerHTML=''; if(typeof body==='string') b.innerHTML=body; else if(body) b.appendChild(body);
   const bt=$('#mBtns'); bt.innerHTML='';
@@ -119,8 +197,26 @@ function modal({title, body, buttons=[], dismiss=true}){
   });
   m.hidden=false;
   m.onclick = e => { if(dismiss && e.target===m) closeModal(); };
+  if(calm() || !card.animate) return;
+  if(swap){
+    card.animate([{opacity:.4, transform:'scale(.985)'},{opacity:1, transform:'none'}], {duration:360, easing:EASE_OUT});
+    stagger(card.children, {delay:0, step:40, y:5, dur:380});
+  } else {
+    m.animate([{opacity:0},{opacity:1}], {duration:280, easing:'ease-out'});
+    card.animate([{opacity:0, transform:'translateY(22px) scale(.96) rotate(-.6deg)'},{opacity:1, transform:'none'}], {duration:520, easing:EASE_OUT});
+    stagger(card.children, {delay:90, step:50, y:6, dur:460});
+  }
 }
-function closeModal(){ $('#modal').hidden=true; }
+function closeModal(){
+  const m=$('#modal'), card=m.firstElementChild;
+  if(m.hidden || modalClosing) return;
+  if(calm() || !card.animate){ m.hidden=true; return; }
+  const o={duration:240, easing:EASE_IN, fill:'forwards'};
+  const a=[m.animate([{opacity:1},{opacity:0}], {...o, duration:280}),
+           card.animate([{opacity:1, transform:'none'},{opacity:0, transform:'translateY(12px) scale(.97)'}], o)];
+  modalClosing=a;
+  a[0].onfinish=()=>{ if(modalClosing!==a) return; modalClosing=null; m.hidden=true; a.forEach(x=>x.cancel()); };
+}
 
 /* ================= 封面 ================= */
 function campaignIdx(){ return Math.min(save.level, LEVELS.length-1); }
@@ -128,13 +224,19 @@ function renderHome(){
   const i = save.cur && save.cur.mode==='c' ? save.cur.idx : campaignIdx();
   $('#contSub').textContent = t('cont.sub', BOOKS.length>1 ? bookName(book) : '', bookSub(book), Math.floor(i/CHAPTER_SIZE), i+1);
   $('#coverTag').textContent = SET==='ref' ? t('cover.tagRef') : t('cover.tag');
+  // 实景皮肤封面：章节号 / 本章进度
+  const pad=n=>String(n).padStart(2,'0'), inCh=i%CHAPTER_SIZE+1;
+  $('#phChap').textContent=pad(Math.floor(i/CHAPTER_SIZE)+1);
+  $('#phCount').textContent=$('#phBarN').textContent=`${inCh} / ${CHAPTER_SIZE}`;
+  $('#phBar').style.width=(inCh/CHAPTER_SIZE*100)+'%';
+  $$('#home .phLvl').forEach(e=>e.textContent=pad(i+1));
 }
 
 /* ================= 目录 ================= */
 let tocOpen = -1;
 function chapterTitle(k){ return t('chapter', k); }
-function renderToc(){
-  const list=$('#tocList'); list.innerHTML='';
+function renderToc(anim={}){
+  const list=$('#tocList'), keep=list.scrollTop; list.innerHTML='';
   const nCh=Math.ceil(LEVELS.length/CHAPTER_SIZE);
   const curCh=Math.floor(campaignIdx()/CHAPTER_SIZE);
   if(tocOpen<0) tocOpen=curCh;
@@ -147,7 +249,7 @@ function renderToc(){
       const el=document.createElement('button');
       el.className='vol'+(b===book?' on':'');
       el.innerHTML=`<b>${bookName(b)}</b><span>${bookSub(b)}</span><em class="mixbar">${bar}</em><small>${done} / ${n}</small>`;
-      el.onclick=()=>{ switchBook(b); tocOpen=-1; renderToc(); };
+      el.onclick=()=>{ if(b===book) return; switchBook(b); tocOpen=-1; renderToc({book:true}); };
       shelf.appendChild(el);
     });
     frag.appendChild(shelf);
@@ -162,10 +264,17 @@ function renderToc(){
     const row=document.createElement('button');
     row.className='chap-row'+(locked?' locked':'');
     row.innerHTML=`<span class="cn">${chapterTitle(k)}</span><span class="ct">${chapterName(k)}</span><span class="dots"></span><span class="cp">${first+1}</span><span class="cs">${locked?'<svg><use href="#i-lock"/></svg>':doneN+'/'+(last-first+1)}</span>`;
-    row.onclick=()=>{ if(locked){toast(t('toc.locked'));return;} tocOpen = tocOpen===k?-2:k; renderToc(); };
+    row.onclick=()=>{
+      if(locked){ toast(t('toc.locked')); return; }
+      const cur=list.querySelector('.chap-pages');
+      if(tocOpen===k){ tocOpen=-2; if(cur){ row.classList.remove('open'); slide(cur, false, ()=>cur.remove()); } return; }
+      // 旧章节收起与新章节展开同时进行
+      tocOpen=k; renderToc({open:k, old:cur});
+    };
     frag.appendChild(row);
     if(k===tocOpen && !locked){
-      const pg=document.createElement('div'); pg.className='chap-pages';
+      row.classList.add('open');
+      const pg=document.createElement('div'); pg.className='chap-pages'; pg.dataset.ch=k;
       for(let i=first;i<=last;i++){
         const b=document.createElement('button');
         const st = i<save.level?'done':(i===save.level?'cur':'lock');
@@ -178,7 +287,20 @@ function renderToc(){
   }
   list.appendChild(frag);
   const open=list.querySelector('.chap-pages');
-  if(open && tocOpen>0) open.previousElementSibling.scrollIntoView({block:'center'});
+  if(anim.open!=null || anim.book){
+    list.scrollTop=keep;
+    if(anim.book) stagger(list.querySelectorAll('.chap-row, .chap-pages'), {delay:0, step:26, max:12, y:6, dur:440});
+    else if(open){
+      // 旧章节的页码仍在收起：用克隆占位，避免列表跳动
+      const rows=[...list.querySelectorAll('.chap-row')], old=anim.old, ok=old?+old.dataset.ch:-1;
+      if(old && rows[ok]){ old.style.pointerEvents='none'; rows[ok].after(old); list.scrollTop=keep; slide(old, false, ()=>old.remove()); }
+      slide(open, true);
+      stagger(open.children, {delay:80, step:14, max:30, y:6, dur:380});
+      setTimeout(()=>{ const r=open.getBoundingClientRect(), lr=list.getBoundingClientRect();
+        if(r.bottom>lr.bottom || r.top<lr.top) open.previousElementSibling.scrollIntoView({block:'nearest', behavior:'smooth'}); }, 320);
+    }
+  }
+  else if(open && tocOpen>0) open.previousElementSibling.scrollIntoView({block:'center'});
 }
 
 /* ================= 每日一页 ================= */
@@ -363,6 +485,7 @@ function renderGame(){
     $('#lvlTitle').textContent=t('page', idx+1);
     $('#folioL').textContent=`— ${idx*2+2} —`; $('#folioR').textContent=`— ${idx*2+3} —`;
   }
+  $$('#game .phLvl').forEach(e=>e.textContent=mode==='c' ? String(idx+1).padStart(2,'0') : (mode==='d' ? t('daily.lvl') : '✎'));
   $('#footnote').innerHTML=''; $('#footnote').classList.remove('show');
   $('#curWord').textContent=''; $('#curWord').className='cur-word';
   $$('.done-card').forEach(e=>e.remove());
@@ -421,6 +544,7 @@ function showDef(w){
   const f=$('#footnote');
   f.innerHTML=defHTML(w);
   f.classList.add('show');
+  f.classList.remove('swap'); void f.offsetWidth; f.classList.add('swap');
 }
 
 /* ---------- 本页信息 ---------- */
@@ -800,11 +924,18 @@ function showTipIfAny(){
   }
   if(!msg && L.curtains.length && !save.tips.curt){ key='curt'; msg=t('tip.curt'); }
   if(!msg) return;
-  const tip=$('#tip'); tip.textContent=msg; tip.hidden=false;
+  const tip=$('#tip'); tip.getAnimations().forEach(a=>a.cancel()); delete tip.dataset.out; tip.textContent=msg; tip.hidden=false;
   save.tips[key]=1; persist();
   clearTimeout(tipTimer); tipTimer=setTimeout(hideTip, 9000);
 }
-function hideTip(){ $('#tip').hidden=true; }
+function hideTip(){
+  const tip=$('#tip');
+  if(tip.hidden || tip.dataset.out) return;
+  if(calm() || !tip.animate){ tip.hidden=true; return; }
+  tip.dataset.out=1;
+  tip.animate([{opacity:1, transform:'translateX(-50%)'},{opacity:0, transform:'translateX(-50%) translateY(-6px) scale(.97)'}],
+    {duration:260, easing:EASE_IN}).onfinish=()=>{ delete tip.dataset.out; tip.hidden=true; };
+}
 
 /* ---------- 完成 ---------- */
 function completeLevel(){
@@ -845,6 +976,7 @@ function showDone(restored){
     <div class="seal">${P.mistakes===0?t('done.perfect'):t('done.read')}</div>
     <button class="plate primary" id="btnNext">${isEdit?t('done.backEditor'):(isDaily?t('done.closeDiary'):(hasNext?t('done.next'):t('done.toc')))}</button>`;
   $('#pageR').appendChild(card);
+  if(!restored) stagger([...card.children].filter(n=>!n.classList.contains('seal')), {delay:180, step:80, y:10, dur:620});
   updateTools();
   card.querySelector('#btnNext').onclick=()=>{
     if(isEdit){ show('editor'); return; }
@@ -910,7 +1042,12 @@ $('#btnUndo').onclick=undo;
 $('#btnHint').onclick=hint;
 $('#btnFire').onclick=firework;
 $('#btnExtras').onclick=showExtras;
-$('#btnInfo').onclick=()=>{ save.tips.infoOpen=!save.tips.infoOpen; persist(); renderInfo(); };
+$('#btnInfo').onclick=()=>{
+  save.tips.infoOpen=!save.tips.infoOpen; persist();
+  const box=$('#info');
+  if(save.tips.infoOpen){ renderInfo(); slide(box, true); stagger(box.children, {delay:60, step:40, y:4, dur:360}); }
+  else { $('#btnInfo').classList.remove('on'); slide(box, false, ()=>{ if(!save.tips.infoOpen) box.hidden=true; }); }
+};
 $('#dictQ').addEventListener('input', renderDict);
 function openSettings(){
   const body=document.createElement('div');
@@ -953,6 +1090,9 @@ function relang(){
   else show(screen);
 }
 $('#btnSettings').onclick=openSettings;
+$('#phSet').onclick=openSettings;
+$('#phDaily').onclick=()=>$('#btnDaily').click();
+$('#phDict').onclick=()=>$('#btnDict').click();
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape'){ if(!$('#modal').hidden) closeModal(); else if(screen!=='home' && screen!=='game') show('home'); }
   if(screen==='game' && (e.ctrlKey||e.metaKey) && e.key==='z'){ e.preventDefault(); undo(); }
