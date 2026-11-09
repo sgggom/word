@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 1024">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1">
+      <stop stop-color="#16306e"/>
+      <stop offset=".52" stop-color="#507fc3"/>
+      <stop offset="1" stop-color="#a6dce5"/>
+    </linearGradient>
+    <linearGradient id="rock" x2=".8" y2="1">
+      <stop stop-color="#579bb7"/>
+      <stop offset="1" stop-color="#204269"/>
+    </linearGradient>
+    <linearGradient id="snow" x2=".4" y2="1">
+      <stop stop-color="#f1ffff"/>
+      <stop offset="1" stop-color="#9ed6ec"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0H1536V1024H0Z"/>
+  <path fill="#96efe5" opacity=".26" d="M435 475Q582 462 680 490T916 472Q1040 439 1170 451Q1036 457 943 497Q810 553 685 515Q545 472 435 492Z"/>
+  <path fill="#9dbce1" d="M0 719 368 697 506 579 558 613 646 523 695 590 729 563 873 701 978 641 1071 677 1173 555 1347 697 1536 679V1024H0Z"/>
+  <path fill="#d0e6f4" d="m506 579 52 34 88-90 49 67 34-27 62 59-60-23-35 21-49-60-35 56-47 16Z"/>
+  <path fill="#668db5" d="M0 822 397 757 505 680 563 708 606 665 749 763 818 694 926 711 1016 651 1162 713 1334 663 1536 730V1024H0Z"/>
+  <path fill="url(#rock)" d="M0 930 440 841C544 825 608 784 693 738S859 665 944 596Q1038 527 1130 484L1536 315V1024H0Z"/>
+  <path fill="#487c9d" d="m543 820 101 105 49-187 43 117 123-190 14 119 71-188 66 126 120-238-25 174 205-257v623H425Z"/>
+  <path fill="url(#snow)" d="M0 930 440 841C544 825 608 784 693 738S859 665 944 596Q1038 527 1130 484L1536 315 1536 350 1130 521Q1060 535 1026 574L970 605 944 635 875 669 828 710 747 732 693 773 638 783 597 815 529 838 440 866 0 967Z"/>
+  <path fill="#c0e5f1" d="m740 830 50-59 52-19-20 24-37 16zm224-119 52-78 59-38-29 46-32 13zM482 918l42-34 65-17-22 21-33 5z"/>
+</svg>

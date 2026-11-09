@@ -82,6 +82,7 @@
         <button class="dbg-btn dbg-btn-minus" type="button" data-dbg-coin="-1000">-1000</button>
       </div>
       <button class="dbg-btn dbg-btn-danger" type="button" id="dbg-reset-all">重置所有数据</button>
+      <button class="dbg-btn" type="button" id="dbg-mountain-progress">登山进度 +5</button>
       <button class="dbg-btn" type="button" id="dbg-mountain-variant">登山界面：A 版</button>
     </div>
   </aside>
@@ -534,7 +535,7 @@
     <section class="mountain-overlay" id="mountain-progress" role="dialog" aria-modal="true" aria-labelledby="mountain-title" hidden>
       <button type="button" id="mountain-dismiss" aria-label="返回">←</button>
       <button type="button" id="mountain-help" aria-label="活动说明" aria-controls="mountain-rules" aria-expanded="false">?</button>
-      <p id="mountain-rules" hidden>每期 29 天。通关获得 1 积分，达到门槛就会前往下一个登山节点。</p>
+      <p id="mountain-rules" hidden>每次通关前进 1 点。到达 25%、50%、75% 时播放爬山动画，登顶分别领取 50g、100g、200g。三座山全部登顶后进入无尽山坡，每再通关 25 关奖励 50g。月底按活动累计进度结算，前 3 名分别获得 200g、100g、50g，下月从第一座山重新开始。</p>
       <div class="mountain-scene">
         <header class="mountain-header">
           <h2 id="mountain-title">Summit Race</h2>
@@ -546,37 +547,26 @@
           </defs>
           <image id="mountain-art" href="assets/mountain/summit-scene.jpg" width="1536" height="1024" />
           <g class="mountain-route" fill="none">
-            <path d="M370 838 Q423 790 505 765 Q530 759 558 731" />
-            <path d="M558 731 C670 710 632 653 753 615 Q824 590 795 541" />
-            <path d="M795 541 C776 507 732 471 811 432 Q955 381 911 343 Q859 304 858 253" />
+            <path d="M370 838 Q423 790 505 765 Q530 759 558 731 C670 710 632 653 753 615 Q824 590 795 541 C776 507 732 471 811 432 Q955 381 911 343 Q859 304 858 253" />
           </g>
-          <g class="mountain-route-marks">
-            <circle cx="558" cy="731" r="12" />
-            <circle cx="795" cy="541" r="12" />
-            <circle cx="921" cy="364" r="12" />
-            <circle cx="858" cy="253" r="12" />
-            <g class="mountain-route-flags">
-              <text x="581" y="711">25%</text>
-              <text x="817" y="526">50%</text>
-              <text x="946" y="348">75%</text>
-            </g>
-          </g>
-          <g class="mountain-hikers">
-            <g transform="translate(462 806)"><use href="#summit-walker" /></g>
-            <g transform="translate(599 722)"><use href="#summit-walker" /></g>
-            <g transform="translate(700 657)"><use href="#summit-walker" /></g>
-            <g transform="translate(837 566)"><use href="#summit-walker" /></g>
-            <g transform="translate(768 482)"><use href="#summit-walker" /></g>
-            <g transform="translate(873 403)"><use href="#summit-walker" /></g>
-            <g transform="translate(891 306)"><use href="#summit-walker" /></g>
-          </g>
+          <g class="mountain-route-marks"></g>
+          <g class="mountain-hikers"></g>
           <g id="mountain-climber"><use href="#summit-walker" /></g>
         </svg>
         <p id="mountain-percentile"></p>
+        <div id="mountain-reward" role="status" hidden>
+          <strong id="mountain-reward-title"></strong>
+          <span class="mountain-reward-coins">
+            <img src="assets/mountain/icon_coins_1.png" alt="" />
+            <span id="mountain-reward-amount"></span>
+          </span>
+        </div>
       </div>
       <div class="mountain-standings">
+        <div class="mountain-status">
+          <p id="mountain-settlement" role="status" hidden></p>
+        </div>
         <div id="mountain-board">
-          <h3>Leaderboards</h3>
           <ol id="mountain-leaderboard" tabindex="0" aria-label="模拟对手的积分排行"></ol>
           <div id="mountain-player-row" aria-label="我的排名"></div>
         </div>
@@ -592,7 +582,7 @@
           <progress id="mountain-leg-progress" max="100" aria-label="本段登山进度"></progress>
           <dl class="mountain-camp-stats">
             <div><dt>营地玩家</dt><dd id="mountain-camp-count"></dd></div>
-            <div><dt>当前排名</dt><dd id="mountain-camp-ranking"></dd></div>
+            <div><dt>营地排名</dt><dd id="mountain-camp-ranking"></dd></div>
           </dl>
         </div>
         <button id="mountain-play" type="button">Start</button>
