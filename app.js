@@ -551,8 +551,8 @@ class SoundManager {
 const AVATAR_PRESETS = [
   {
     id: 0,
-    bg: 'linear-gradient(135deg, #7c8f6b 0%, #526343 100%)',
-    svg: '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>',
+    bg: 'url("assets/lobby/owl.png") center / cover no-repeat',
+    svg: '',
   },
   {
     id: 1,
@@ -588,6 +588,7 @@ const RAPIDS_STAGES = [
   { target: 100, reward: 100 },
 ];
 const WHEEL_BASE_REWARDS = [5, 10, 5, 20, 5, 50];
+const WHEEL_PRIZE_ART = [1, 4, 5, 2, 6, 3];
 const WHEEL_DAILY_MAX_SPINS = 6;
 const TOURNAMENT_DURATION_MS = 24 * 60 * 60 * 1000;
 const TOURNAMENT_BOT_TEMPLATES = [
@@ -613,7 +614,6 @@ class GameFramework {
       currentScreen: 'lobby',
       levelIndex: 0,
       isDaily: false,
-      dailyCheckedIn: false,
       eventActive: false,
       eventThemeIndex: 0,
       eventProgress: 0,
@@ -652,6 +652,7 @@ class GameFramework {
     this.collectibles = [];
     this.mainSession = null;
     this.dailySession = null;
+    this.dailyWinDays = new Set();
     this.toastTimer = null;
     this.pointerPos = null;
     this.feedbackLock = false;
@@ -771,7 +772,7 @@ class GameFramework {
     this.state.levelIndex = 0;
     this.state.isDaily = false;
     this.state.isCustom = false;
-    this.state.dailyCheckedIn = false;
+    this.dailyWinDays.clear();
     this.state.eventActive = false;
     this.state.eventThemeIndex = 0;
     this.state.eventProgress = 0;
@@ -840,7 +841,6 @@ class GameFramework {
       const raw = localStorage.getItem(this.getStorageKey());
       if (!raw) return;
       const data = JSON.parse(raw);
-      this.mountain.load(data.mountain);
       if (typeof data.levelIndex === 'number') this.state.levelIndex = data.levelIndex;
       if (typeof data.coins === 'number') this.state.coins = data.coins;
       if (typeof data.eventActive === 'boolean') this.state.eventActive = data.eventActive;
@@ -858,6 +858,7 @@ class GameFramework {
       if (typeof data.virtualTimeOffsetMs === 'number') {
         this.state.virtualTimeOffsetMs = data.virtualTimeOffsetMs;
       }
+      this.mountain.load(data.mountainSeason);
       if (typeof data.playerName === 'string' && data.playerName.trim()) {
         this.state.playerName = data.playerName.trim();
       }
@@ -876,8 +877,16 @@ class GameFramework {
         selectedPalette = PALETTE[data.paletteIndex];
       }
       const today = this.getTodayDateTitle();
+      if (Array.isArray(data.dailyWinDays)) {
+        this.dailyWinDays = new Set(data.dailyWinDays.filter(Number.isInteger));
+      } else if (data.dailyCheckedIn) {
+        const now = this.getNowDate();
+        const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        const day = this.getDailyDayIndex();
+        if (data.dailyCheckinDate === today) this.dailyWinDays.add(day);
+        if (data.dailyCheckinDate === this.getTodayDateTitle(yesterday)) this.dailyWinDays.add(day - 1);
+      }
       if (data.dailyCheckinDate === today) {
-        this.state.dailyCheckedIn = !!data.dailyCheckedIn;
         this.dailySession = data.dailySession || null;
       }
       if (data.wheelSpinDate === today && typeof data.wheelSpinsUsed === 'number') {
@@ -950,9 +959,9 @@ class GameFramework {
       const paletteIndex = Math.max(0, PALETTE.indexOf(selectedPalette));
       const payload = {
         levelIndex: this.state.levelIndex,
-        mountain: this.mountain.data,
+        mountainSeason: this.mountain.data,
         coins: this.state.coins,
-        dailyCheckedIn: this.state.dailyCheckedIn,
+        dailyWinDays: Array.from(this.dailyWinDays),
         dailyCheckinDate: this.getTodayDateTitle(),
         eventActive: this.state.eventActive,
         eventThemeIndex: this.state.eventThemeIndex,
@@ -995,7 +1004,6 @@ class GameFramework {
       editor: document.getElementById('screen-editor'),
     };
 
-    this.elLevel = document.getElementById('lobby-level');
     this.btnPlayerProfile = document.getElementById('btn-player-profile');
     this.elLobbyAvatar = document.getElementById('lobby-avatar');
     this.modalProfile = document.getElementById('modal-profile');
@@ -1008,7 +1016,8 @@ class GameFramework {
     this.elProfileBarChart = document.getElementById('profile-bar-chart');
     this.elStartLevelLabel = document.getElementById('start-level-label');
     this.btnDailyCheckin = document.getElementById('btn-daily-checkin');
-    this.elDailyEntryLabel = document.getElementById('daily-entry-label');
+    this.elDailyEntryCount = this.btnDailyCheckin?.querySelector('.daily-entry-count');
+    this.elDailyEntryStatus = document.getElementById('daily-entry-status');
     this.btnEventEntry = document.getElementById('btn-event-entry');
     this.elLobbyEventProg = document.getElementById('lobby-event-prog');
     this.modalEvent = document.getElementById('modal-event');
@@ -1034,10 +1043,9 @@ class GameFramework {
     this.elRankupList = document.getElementById('rankup-list');
     this.btnWheelEntry = document.getElementById('btn-wheel-entry');
     this.modalWheel = document.getElementById('modal-wheel');
-    this.elWheelLevelTag = document.getElementById('wheel-level-tag');
+    this.elWheelCoins = document.getElementById('wheel-coins');
     this.elWheelDisc = document.getElementById('wheel-disc');
     this.elWheelSectors = document.getElementById('wheel-sectors');
-    this.elWheelCenterHub = document.getElementById('wheel-center-hub');
     this.elWheelUpgradeBanner = document.getElementById('wheel-upgrade-banner');
     this.elWheelRewardToast = document.getElementById('wheel-reward-toast');
     this.btnWheelSpin = document.getElementById('btn-wheel-spin');
@@ -1083,8 +1091,8 @@ class GameFramework {
     this.fxCv = document.getElementById('fx');
     this.fxCx = this.fxCv ? this.fxCv.getContext('2d') : null;
 
-    this.elResultTitle = document.getElementById('result-title');
-    this.elResultQuote = document.getElementById('result-quote');
+    this.elResultNextLevel = document.getElementById('result-next-level');
+    this.elResultRewardLabel = document.getElementById('result-reward-label');
     this.elResultChestCard = document.getElementById('result-chest-card');
     this.elResultChestLabel = document.getElementById('result-chest-label');
     this.elResultChestStep = document.getElementById('result-chest-step');
@@ -1437,7 +1445,7 @@ class GameFramework {
     if (btnDbgResetDaily) {
       btnDbgResetDaily.addEventListener('click', () => {
         this.sound.playClick();
-        this.state.dailyCheckedIn = false;
+        this.dailyWinDays.delete(this.getDailyDayIndex());
         this.dailySession = null;
         this.updateLobbyUI();
         this.updateDebugPanel();
@@ -1517,6 +1525,9 @@ class GameFramework {
         this.quickFillNextWord();
       });
     }
+    document.getElementById('dbg-game-bonus-word')?.addEventListener('click', () => {
+      this.quickDiscoverBonusWord();
+    });
     if (this.btnDbgGameUndo) {
       this.btnDbgGameUndo.addEventListener('click', () => {
         this.undoLastStep();
@@ -1533,9 +1544,11 @@ class GameFramework {
         this.startGame(true);
       });
     }
-    document.getElementById('btn-pause').addEventListener('click', () => {
-      this.sound.playClick();
-      this.togglePause(true);
+    ['btn-lobby-settings', 'btn-pause'].forEach((id) => {
+      document.getElementById(id).addEventListener('click', () => {
+        this.sound.playClick();
+        this.togglePause(true);
+      });
     });
     this.btnToggleSound.addEventListener('click', () => {
       this.sound.enabled = !this.sound.enabled;
@@ -1794,11 +1807,26 @@ class GameFramework {
     this.updateUndoButtonState();
   }
 
-  getTodayDateTitle() {
-    const now = this.getNowDate();
+  getTodayDateTitle(now = this.getNowDate()) {
     const m = now.getMonth() + 1;
     const d = now.getDate();
     return `${m}月${d}日`;
+  }
+
+  getDailyDayIndex() {
+    const now = this.getNowDate();
+    return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000;
+  }
+
+  getDailyStreak(today) {
+    // 昨天的连胜保留到今天结束，今天通关后从今天开始计算。
+    let day = this.dailyWinDays.has(today) ? today : today - 1;
+    let streak = 0;
+    while (this.dailyWinDays.has(day)) {
+      streak += 1;
+      day -= 1;
+    }
+    return streak;
   }
 
   adjustVirtualTime(deltaMs) {
@@ -1825,7 +1853,6 @@ class GameFramework {
     const curDateKey = this.getTodayDateTitle();
     if (this.lastVirtualDateKey && curDateKey !== this.lastVirtualDateKey) {
       this.lastVirtualDateKey = curDateKey;
-      this.state.dailyCheckedIn = false;
       this.dailySession = null;
       this.state.wheelSpinsUsed = 0;
       this.state.rapidsClearedCount = 0;
@@ -1890,10 +1917,11 @@ class GameFramework {
     }
 
     if (this.elDbgStatusDaily) {
-      this.elDbgStatusDaily.textContent = this.state.dailyCheckedIn
+      const completedToday = this.dailyWinDays.has(this.getDailyDayIndex());
+      this.elDbgStatusDaily.textContent = completedToday
         ? `${this.getTodayDateTitle()} · 已完成`
         : `${this.getTodayDateTitle()} · 未完成`;
-      this.elDbgStatusDaily.classList.toggle('on', !!this.state.dailyCheckedIn);
+      this.elDbgStatusDaily.classList.toggle('on', completedToday);
     }
 
     if (this.elDbgStatusWheel) {
@@ -1925,14 +1953,18 @@ class GameFramework {
 
   updateLobbyUI() {
     const levelId = this.state.levelIndex + 1;
-    this.elLevel.textContent = `Lv.${levelId}`;
-    this.elStartLevelLabel.textContent = `Level ${levelId}`;
+    this.elStartLevelLabel.textContent = `LEVEL ${String(levelId).padStart(2, '0')}`;
     this.mountain.update();
     this.elCoins.textContent = this.state.coins.toLocaleString();
-    if (this.elDailyEntryLabel) {
-      this.elDailyEntryLabel.textContent = this.state.dailyCheckedIn
-        ? '每日签到 · 已完成'
-        : '每日签到';
+    this.elWheelCoins.textContent = this.elCoins.textContent;
+    if (this.btnDailyCheckin && this.elDailyEntryCount && this.elDailyEntryStatus) {
+      const today = this.getDailyDayIndex();
+      const completedToday = this.dailyWinDays.has(today);
+      const streak = this.getDailyStreak(today);
+      this.elDailyEntryCount.textContent = `x${streak}`;
+      this.elDailyEntryStatus.hidden = !completedToday;
+      this.btnDailyCheckin.setAttribute('aria-label',
+        `每日挑战 · 连胜 ${streak} 天${completedToday ? ' · 已完成' : ''}`);
     }
     if (this.elLobbyEventProg) {
       this.elLobbyEventProg.textContent = `${this.state.eventProgress}/5`;
@@ -2364,7 +2396,7 @@ class GameFramework {
       }
       if (this.elWheelRewardToast) {
         this.elWheelRewardToast.classList.remove('highlight');
-        this.elWheelRewardToast.textContent = '每日可转 6 次（1次免费 + 5次视频）';
+        this.elWheelRewardToast.textContent = '';
       }
       this.renderWheelModal();
     }
@@ -2377,29 +2409,15 @@ class GameFramework {
     const upgraded = !!this.state.wheelUpgraded;
     const rewards = this.getWheelCurrentRewards(upgraded);
 
-    if (this.elWheelLevelTag) {
-      this.elWheelLevelTag.textContent = upgraded
-        ? 'LV.2 MAX · 奖励已翻倍 ×2'
-        : 'LV.1 · 首次转动后升级翻倍';
-      this.elWheelLevelTag.classList.toggle('upgraded', upgraded);
-    }
-    if (this.elWheelDisc) {
-      this.elWheelDisc.classList.toggle('upgraded', upgraded);
-    }
-    if (this.elWheelCenterHub) {
-      this.elWheelCenterHub.textContent = upgraded ? '×2' : '×1';
-      this.elWheelCenterHub.classList.toggle('upgraded', upgraded);
-    }
+    this.modalWheel.classList.toggle('upgraded', upgraded);
 
     this.elWheelSectors.innerHTML = '';
-    const radius = 74;
     rewards.forEach((val, idx) => {
-      const deg = idx * 60;
       const item = document.createElement('div');
       item.className = 'wheel-sector-item';
-      item.style.transform = `rotate(${deg}deg) translateY(-${radius}px)`;
+      item.style.setProperty('--sector-angle', `${idx * 60}deg`);
       item.innerHTML = `
-        <span class="icon-coin"></span>
+        <img src="assets/wheel/prize-${WHEEL_PRIZE_ART[idx]}.png" alt="" />
         <span class="wheel-sector-val" data-sector-idx="${idx}">${val}</span>
       `;
       this.elWheelSectors.appendChild(item);
@@ -2415,6 +2433,7 @@ class GameFramework {
       this.elWheelQuotaText.textContent = `今日剩余：${remaining} / ${WHEEL_DAILY_MAX_SPINS} 次`;
     }
     if (!this.btnWheelSpin) return;
+    this.btnWheelSpin.dataset.free = String(used === 0);
 
     if (this.wheelSpinning) {
       this.btnWheelSpin.disabled = true;
@@ -2426,7 +2445,7 @@ class GameFramework {
       this.btnWheelSpin.textContent = '今日次数已用完';
     } else if (used === 0) {
       this.btnWheelSpin.disabled = false;
-      this.btnWheelSpin.textContent = '免费转动 (1/1)';
+      this.btnWheelSpin.textContent = 'Spin';
     } else {
       const videoRem = WHEEL_DAILY_MAX_SPINS - used;
       this.btnWheelSpin.disabled = false;
@@ -2506,21 +2525,14 @@ class GameFramework {
 
   playWheelUpgradeAnimation(onComplete) {
     this.state.wheelUpgraded = true;
+    this.modalWheel.classList.add('upgraded');
     this.saveProgress();
 
     if (this.elWheelUpgradeBanner) {
       this.elWheelUpgradeBanner.classList.add('visible');
     }
     if (this.elWheelDisc) {
-      this.elWheelDisc.classList.add('upgrading', 'upgraded');
-    }
-    if (this.elWheelCenterHub) {
-      this.elWheelCenterHub.textContent = '×2';
-      this.elWheelCenterHub.classList.add('upgraded');
-    }
-    if (this.elWheelLevelTag) {
-      this.elWheelLevelTag.textContent = 'LV.2 MAX · 奖励已翻倍 ×2';
-      this.elWheelLevelTag.classList.add('upgraded');
+      this.elWheelDisc.classList.add('upgrading');
     }
     if (this.elWheelRewardToast) {
       this.elWheelRewardToast.textContent = '转盘已升级！所有扇区金币奖励永久 ×2';
@@ -2714,7 +2726,6 @@ class GameFramework {
 
   startGame(isDaily = false) {
     this.gameRun = {};
-    this.mountain.closeStart();
     this.customLevel = this._pendingCustom || null;
     this._pendingCustom = null;
     this.state.isCustom = !!this.customLevel;
@@ -2769,9 +2780,6 @@ class GameFramework {
     this.switchScreen('game');
     this.mountain.update();
     this.saveProgress();
-    if (!isDaily && !this.state.isCustom) {
-      this.mountain.openStart(this.mainLevelDifficulty(), this.currentLevel.targets.length);
-    }
   }
 
   toggleBonusModal(open) {
@@ -2946,6 +2954,9 @@ class GameFramework {
   }
 
   togglePause(paused) {
+    const inGame = this.state.currentScreen === 'game';
+    document.getElementById('btn-resume').textContent = inGame ? '继续' : '关闭';
+    document.getElementById('btn-quit-to-lobby').hidden = !inGame;
     this.state.paused = paused;
     this.modalPause.classList.toggle('active', paused);
   }
@@ -3305,7 +3316,7 @@ class GameFramework {
   }
 
   onPointerDown(e) {
-    if (this.state.currentScreen !== 'game' || this.state.paused || this.feedbackLock || !this.mountain.startModal.hidden) return;
+    if (this.state.currentScreen !== 'game' || this.state.paused || this.feedbackLock) return;
     const tile = this.getTileFromPoint(e.clientX, e.clientY);
     if (!tile) return;
 
@@ -3561,6 +3572,24 @@ class GameFramework {
     this.handleValidWord(nextWord);
   }
 
+  quickDiscoverBonusWord() {
+    if (
+      this.state.currentScreen !== 'game' ||
+      this.state.paused ||
+      this.isDragging ||
+      this.feedbackLock ||
+      !this.currentLevel
+    ) {
+      return;
+    }
+
+    for (const word of BONUS_WORDS) {
+      if (word.length < 3 || this.currentLevel.targets.includes(word) || this.bonusWords.has(word)) continue;
+      this.handleBonusWord(word);
+      return;
+    }
+  }
+
   quickWinCurrentLevel() {
     if (
       this.state.currentScreen !== 'game' ||
@@ -3599,6 +3628,8 @@ class GameFramework {
 
   completeLevel(delay) {
     const run = this.gameRun;
+    if (!run || run.completed || this.state.currentScreen !== 'game') return;
+    run.completed = true;
     const isMain = !this.state.isDaily && !this.state.isCustom;
     const shouldRunTournamentAnim = isMain && this.state.tournamentActive &&
       this.getNowMs() < this.state.tournamentEndTime;
@@ -3611,13 +3642,12 @@ class GameFramework {
       this.levelTournamentPoints = 0;
     }
 
-    let mountainResult = null;
+    const mountainPromotion = this.state.isCustom ? null : this.mountain.awardClear();
     if (isMain) {
-      mountainResult = this.mountain.clear(this.state.levelIndex, this.mainLevelDifficulty());
       this.state.levelIndex += 1;
       this.mainSession = null;
     } else if (this.state.isDaily) {
-      this.state.dailyCheckedIn = true;
+      this.dailyWinDays.add(this.getDailyDayIndex());
       this.dailySession = null;
     }
     if (!this.state.isCustom) this.recordLevelCleared();
@@ -3629,7 +3659,7 @@ class GameFramework {
     const finish = () => {
       if (this.gameRun !== run) return;
       this.feedbackLock = false;
-      this.finishGame(mountainResult);
+      this.finishGame(mountainPromotion);
     };
     setTimeout(() => {
       if (this.gameRun !== run) return;
@@ -3701,6 +3731,7 @@ class GameFramework {
   }
 
   handleBonusWord(word) {
+    const run = this.gameRun;
     this.feedbackLock = true;
     const isNew = !this.bonusWords.has(word);
     if (isNew) {
@@ -3716,9 +3747,10 @@ class GameFramework {
     // 额外词连接成功后，不减少字母格子层数，仅回弹复位
     const matchedTiles = [...this.selectedChain];
     matchedTiles.forEach((t) => t.up(this.clock));
+    const lastTile = matchedTiles.at(-1);
+    const reachedFive = isNew && this.bonusProgress % 5 === 0;
 
-    if (isNew && this.btnBonusWords && this.phoneFrame) {
-      const lastTile = matchedTiles[matchedTiles.length - 1];
+    if (isNew && lastTile && this.btnBonusWords && this.phoneFrame) {
       const frameRect = this.phoneFrame.getBoundingClientRect();
       const fromRect = lastTile.el.getBoundingClientRect();
       const toRect = this.btnBonusWords.getBoundingClientRect();
@@ -3740,7 +3772,7 @@ class GameFramework {
 
       setTimeout(() => {
         flyer.style.opacity = '0';
-        const reachedFive = this.bonusProgress > 0 && this.bonusProgress % 5 === 0;
+        if (this.gameRun !== run) return;
         this.updateBonusUI(reachedFive);
         this.btnBonusWords.classList.remove('pop');
         void this.btnBonusWords.offsetWidth;
@@ -3750,16 +3782,20 @@ class GameFramework {
       setTimeout(() => {
         flyer.remove();
       }, 500);
-    } else if (this.btnBonusWords) {
-      this.btnBonusWords.classList.remove('pop');
-      void this.btnBonusWords.offsetWidth;
-      this.btnBonusWords.classList.add('pop');
+    } else {
+      if (isNew) this.updateBonusUI(reachedFive);
+      if (this.btnBonusWords) {
+        this.btnBonusWords.classList.remove('pop');
+        void this.btnBonusWords.offsetWidth;
+        this.btnBonusWords.classList.add('pop');
+      }
     }
 
     this.updateCurrentWordBar(word, 'valid');
     this.renderLines('#b99a5b');
 
     setTimeout(() => {
+      if (this.gameRun !== run) return;
       this.selectedChain = [];
       this.clearLines();
       this.updateCurrentWordBar('');
@@ -3784,11 +3820,8 @@ class GameFramework {
     }, 240);
   }
 
-  finishGame(mountainResult = null) {
+  finishGame(mountainPromotion = null) {
     this.sound.playVictory();
-    const allSolved =
-      this.currentLevel &&
-      this.solvedWords.size === this.currentLevel.targets.length;
 
     const prevStep = this.state.chestProgress % 5;
     let nextStep = prevStep;
@@ -3812,19 +3845,8 @@ class GameFramework {
     this.updateDebugPanel();
     this.saveProgress();
 
-    const quotes = [
-      '每一次思考的连接，都是通往智慧的阶梯。',
-      '看似散落的字母，终会在坚持中拼出答案。',
-      '保持专注与耐心，生活处处皆有柳暗花明。',
-      '今日点滴的积累，终将照亮前行的路。',
-      '不急不躁，每一步都在靠近更好的自己。',
-    ];
-    if (this.elResultTitle) {
-      this.elResultTitle.textContent = allSolved ? 'VICTORY' : 'COMPLETE';
-    }
-    if (this.elResultQuote) {
-      this.elResultQuote.textContent = quotes[(this.state.levelIndex - 1 + quotes.length) % quotes.length];
-    }
+    this.elResultNextLevel.textContent = this.state.isCustom ? '返回编辑器' : `Level ${this.state.levelIndex + 1}`;
+    this.elResultRewardLabel.textContent = '宝箱奖励';
 
     if (this.elResultChestCard) {
       this.elResultChestCard.classList.remove('unlocked');
@@ -3833,7 +3855,7 @@ class GameFramework {
       this.elResultChestLabel.textContent = '关卡宝箱';
     }
     if (this.elResultChestStep) {
-      this.elResultChestStep.textContent = `${prevStep} / 5`;
+      this.elResultChestStep.textContent = `${prevStep}/5`;
     }
     if (this.elResultChestFill) {
       this.elResultChestFill.style.transition = 'none';
@@ -3852,22 +3874,22 @@ class GameFramework {
         }, 620);
       }
     };
-    const mountainCoins = document.getElementById('mountain-result-coins');
-    mountainCoins.hidden = !mountainResult || mountainResult.moved;
-    if (!mountainCoins.hidden) mountainCoins.textContent = `困难关 · +${mountainResult.coins} 金币`;
-    if (mountainResult?.moved && this.mountain.data.enabled) this.mountain.showProgress(mountainResult, showRapids);
+    if (mountainPromotion) this.mountain.show(mountainPromotion, showRapids);
     else showRapids();
 
     setTimeout(() => {
+      if (this.gameRun !== run || this.state.currentScreen !== 'result') return;
       if (this.elResultChestFill) {
         this.elResultChestFill.style.transition = 'width 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
         this.elResultChestFill.style.width = `${(nextStep / 5) * 100}%`;
       }
       if (this.elResultChestStep) {
-        this.elResultChestStep.textContent = `${nextStep} / 5`;
+        this.elResultChestStep.textContent = `${nextStep}/5`;
       }
       if (chestUnlocked) {
         setTimeout(() => {
+          if (this.gameRun !== run || this.state.currentScreen !== 'result') return;
+          this.elResultRewardLabel.textContent = '已获得';
           if (this.elResultChestCard) {
             this.elResultChestCard.classList.add('unlocked');
           }

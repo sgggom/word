@@ -81,17 +81,8 @@
         <button class="dbg-btn dbg-btn-minus" type="button" data-dbg-coin="-100">-100</button>
         <button class="dbg-btn dbg-btn-minus" type="button" data-dbg-coin="-1000">-1000</button>
       </div>
-      <div class="mountain-debug">
-        <label><input id="dbg-mountain-enabled" type="checkbox" checked> 登山</label>
-        <label>分组
-          <select id="dbg-mountain-group">
-            <option value="3">3 · 关键步加成</option>
-            <option value="0">0 · 基础奖励</option>
-            <option value="2">2 · 剩余时间奖励</option>
-          </select>
-        </label>
-      </div>
       <button class="dbg-btn dbg-btn-danger" type="button" id="dbg-reset-all">重置所有数据</button>
+      <button class="dbg-btn" type="button" id="dbg-mountain-variant">登山界面：A 版</button>
     </div>
   </aside>
 
@@ -101,6 +92,7 @@
     <div class="dbg-section dbg-game-section">
       <button class="dbg-btn dbg-game-btn dbg-game-btn-primary" type="button" id="dbg-game-win">快速通关</button>
       <button class="dbg-btn dbg-game-btn" type="button" id="dbg-game-fill-word">快速填词</button>
+      <button class="dbg-btn dbg-game-btn" type="button" id="dbg-game-bonus-word">发现额外词</button>
       <button class="dbg-btn dbg-game-btn" type="button" id="dbg-game-undo">撤销</button>
     </div>
   </aside>
@@ -109,40 +101,29 @@
     <!-- 1. 游戏大厅 -->
     <section id="screen-lobby" class="screen active">
       <header class="lobby-top">
-        <div class="player-badge" id="btn-player-profile" role="button" tabindex="0" aria-label="个人信息">
-          <div class="avatar" id="lobby-avatar"></div>
-          <div class="player-meta">
-            <span class="player-level" id="lobby-level">Lv.1</span>
-            <div class="exp-bar"><div class="exp-fill"></div></div>
-          </div>
+        <div class="lobby-controls">
+          <button class="lobby-profile" id="btn-player-profile" type="button" aria-label="个人信息">
+            <span class="avatar" id="lobby-avatar"></span>
+          </button>
+          <button class="lobby-settings" id="btn-lobby-settings" type="button" aria-label="设置">
+            <img src="assets/lobby/settings.png" width="78" height="81" alt="" />
+          </button>
         </div>
-        <div class="currency-group">
-          <div class="currency-pill">
-            <span class="icon-coin"></span>
-            <span id="lobby-coins">2,450</span>
-          </div>
+        <div class="lobby-currency" aria-label="金币">
+          <img class="lobby-coin" src="assets/lobby/coin.png" width="48" height="49" alt="" />
+          <span id="lobby-coins">2,450</span>
+          <img class="lobby-coin-plus" src="assets/lobby/plus.png" width="37" height="38" alt="" />
         </div>
       </header>
 
       <main class="lobby-stage">
         <h1 class="game-logo" id="game-logo" role="button" tabindex="0" aria-label="打开关卡编辑器">
-          <span class="logo-mark" aria-hidden="true">
-            <svg class="logo-link" viewBox="0 0 200 76"><path d="M26 50 L74 26 L126 50 L174 26"/></svg>
-            <span class="logo-tile t1">W</span>
-            <span class="logo-tile t2">O</span>
-            <span class="logo-tile t3">R</span>
-            <span class="logo-tile t4">D</span>
-          </span>
-          <span class="logo-word">LOGIC</span>
-          <span class="logo-sub">puzzle</span>
+          <img src="assets/lobby/logo.png" width="459" height="297" alt="Word Logic Puzzle" />
         </h1>
-        <button class="btn-daily-entry" id="btn-daily-checkin" aria-label="每日签到">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="17" rx="3"></rect>
-            <path d="M8 2v4M16 2v4M3 9h18"></path>
-            <path d="M9 14l2 2 4-4"></path>
-          </svg>
-          <span class="daily-entry-label" id="daily-entry-label">每日签到</span>
+        <button class="btn-daily-entry" id="btn-daily-checkin" type="button" aria-label="每日挑战">
+          <img class="daily-entry-quill" src="assets/daily/quill.png" width="74" height="96" alt="" />
+          <span class="daily-entry-count" aria-hidden="true">x0</span>
+          <span class="daily-entry-status" id="daily-entry-status" aria-hidden="true" hidden>已完成</span>
         </button>
 
         <!-- 大厅左侧挂载：收集活动入口 -->
@@ -158,13 +139,8 @@
 
         <!-- 大厅左侧挂载（收集活动下方）：转盘入口 -->
         <button class="btn-wheel-entry" id="btn-wheel-entry" aria-label="幸运转盘">
-          <span class="wheel-entry-icon" aria-hidden="true">
-            <svg class="icon" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9"></circle>
-              <circle cx="12" cy="12" r="2.2"></circle>
-              <path d="M12 3v6.8M12 14.2V21M4.2 7.5l5.9 3.4M13.9 13.1l5.9 3.4M19.8 7.5l-5.9 3.4M10.1 13.1l-5.9 3.4"></path>
-            </svg>
-          </span>
+          <img src="assets/wheel/entry.png" width="120" height="118" alt="" />
+          <span class="wheel-entry-label" aria-hidden="true">Spins</span>
         </button>
 
         <!-- 大厅右侧挂载：锦标赛入口 -->
@@ -188,11 +164,18 @@
             </svg>
           </span>
         </button>
+        <button class="btn-mountain-entry" id="mountain-access" type="button">
+          <img src="assets/mountain/bronze.png" alt="" />
+          <span>登山</span>
+        </button>
       </main>
 
       <footer class="lobby-bottom">
-        <button class="btn-primary btn-start" id="btn-start-game"><span id="start-level-label">Level 1</span><span class="mountain-badge" hidden></span></button>
-        <button type="button" id="mountain-access" hidden>登山进度</button>
+        <button class="btn-start" id="btn-start-game" type="button">
+          <span class="lobby-play-label">PLAY</span>
+          <span id="start-level-label">LEVEL 01</span>
+          <span class="mountain-badge" hidden></span>
+        </button>
       </footer>
     </section>
 
@@ -237,11 +220,6 @@
             <div class="board-grid" id="board-grid"></div>
           </div>
           <div class="board-tools">
-            <div id="mountain-tools" aria-label="登山道具">
-              <button type="button" data-mountain-tool="hint" hidden></button>
-              <button type="button" data-mountain-tool="plane" hidden></button>
-              <button type="button" data-mountain-tool="firework" hidden></button>
-            </div>
             <button class="btn-bonus" id="btn-bonus-words" aria-label="额外词库">
               <svg class="bonus-ring" viewBox="0 0 54 54" aria-hidden="true">
                 <circle class="bonus-ring-track" cx="27" cy="27" r="24"></circle>
@@ -265,66 +243,35 @@
         </div>
       </div>
 
-      <!-- 设置弹窗 -->
-      <div class="modal-overlay" id="modal-pause">
-        <div class="modal-card">
-          <div class="modal-title">设置</div>
-          <div class="settings-group">
-            <div class="setting-row">
-              <label>选中配色</label>
-              <div class="swatches" id="swatches"></div>
-            </div>
-          </div>
-          <div class="modal-actions">
-            <button class="btn-secondary" id="btn-toggle-sound">音效: 开</button>
-            <button class="btn-primary" id="btn-resume">继续</button>
-            <button class="btn-ghost" id="btn-quit-to-lobby">退出</button>
-          </div>
-        </div>
-      </div>
     </section>
 
     <!-- 3. 游戏结算界面 -->
     <section id="screen-result" class="screen">
       <div class="result-container">
-        <div class="result-logo">
-          <div class="result-logo-emblem" aria-hidden="true"></div>
-          <div class="result-banner" id="result-title">VICTORY</div>
-        </div>
-
-        <div class="result-quote-card">
-          <div class="quote-mark">“</div>
-          <p class="quote-text" id="result-quote">每一次思考的连接，都是通往智慧的阶梯。</p>
-        </div>
+        <header class="result-logo">
+          <img class="result-book" src="assets/result/book.png" width="727" height="351" alt="" />
+          <h1><img class="result-title" src="assets/result/wonderful.png" width="351" height="55" alt="Wonderful!" /></h1>
+        </header>
 
         <div class="result-chest-card" id="result-chest-card">
-          <div class="result-chest-top">
-            <div class="result-chest-title-wrap">
-              <span class="result-chest-icon" id="result-chest-icon" aria-hidden="true">
-                <svg class="icon" viewBox="0 0 24 24">
-                  <rect x="3" y="8" width="18" height="12" rx="2"></rect>
-                  <path d="M3 12h18M7 4h10l4 4H3l4-4z"></path>
-                  <rect x="10" y="10" width="4" height="4" rx="1"></rect>
-                </svg>
-              </span>
-              <span class="result-chest-label" id="result-chest-label">关卡宝箱</span>
-            </div>
-            <span class="result-chest-step" id="result-chest-step">1 / 5</span>
-          </div>
+          <p class="result-praise">You did a great job!</p>
+          <p class="result-chest-label" id="result-chest-label">关卡宝箱</p>
           <div class="result-chest-bar-row">
             <div class="result-chest-track">
               <div class="result-chest-fill" id="result-chest-fill"></div>
+              <span class="result-chest-step" id="result-chest-step">0/5</span>
             </div>
-            <div class="result-chest-reward" id="result-chest-reward">
-              <span class="icon-coin"></span>
-              <span>20</span>
-            </div>
+            <img class="result-chest-reward" src="assets/wheel/prize-1.png" width="126" height="109" alt="" />
           </div>
         </div>
 
-        <p id="mountain-result-coins" hidden></p>
         <div class="result-actions">
-          <button class="btn-primary btn-large" id="btn-replay">再来一局<span class="mountain-badge" hidden></span></button>
+          <div class="result-reward">
+            <img src="assets/lobby/coin.png" width="48" height="49" alt="" />
+            <strong>20</strong>
+            <span id="result-reward-label">宝箱奖励</span>
+          </div>
+          <button id="btn-replay" type="button"><span id="result-next-level">Level 2</span><span class="mountain-badge" hidden></span></button>
         </div>
       </div>
     </section>
@@ -370,6 +317,24 @@
         </div>
       </div>
     </section>
+
+    <!-- 设置弹窗（大厅与游戏内共用） -->
+    <div class="modal-overlay" id="modal-pause">
+      <div class="modal-card">
+        <div class="modal-title">设置</div>
+        <div class="settings-group">
+          <div class="setting-row">
+            <label>选中配色</label>
+            <div class="swatches" id="swatches"></div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="btn-toggle-sound">音效: 开</button>
+          <button class="btn-primary" id="btn-resume">继续</button>
+          <button class="btn-ghost" id="btn-quit-to-lobby">退出</button>
+        </div>
+      </div>
+    </div>
 
     <!-- 收集活动弹窗（大厅与游戏内共用） -->
     <div class="modal-overlay" id="modal-event">
@@ -453,28 +418,29 @@
 
     <!-- 幸运转盘弹窗 -->
     <div class="modal-overlay" id="modal-wheel">
-      <div class="modal-card wheel-modal-card">
-        <button class="modal-close-btn" id="btn-close-wheel" aria-label="关闭">×</button>
-        <div class="wheel-header">
-          <div class="modal-title wheel-title">幸运转盘</div>
+      <div class="modal-card wheel-modal-card" role="dialog" aria-modal="true" aria-labelledby="wheel-title">
+        <div class="wheel-balance" aria-label="金币">
+          <img src="assets/lobby/coin.png" width="48" height="49" alt="" />
+          <span id="wheel-coins">2,450</span>
         </div>
+        <button class="modal-close-btn" id="btn-close-wheel" type="button" aria-label="关闭"></button>
+        <header class="wheel-header">
+          <h2 id="wheel-title">Lucky Spin</h2>
+        </header>
 
         <div class="wheel-stage">
-          <div class="wheel-pointer" aria-hidden="true"></div>
-          <div class="wheel-upgrade-banner" id="wheel-upgrade-banner">×2</div>
           <div class="wheel-disc" id="wheel-disc">
-            <div class="wheel-lines" aria-hidden="true">
-              <span class="w-line l0"></span>
-              <span class="w-line l1"></span>
-              <span class="w-line l2"></span>
-            </div>
             <div class="wheel-sectors" id="wheel-sectors"></div>
           </div>
-          <div class="wheel-center-hub" id="wheel-center-hub">×1</div>
+          <div class="wheel-decoration" aria-hidden="true"></div>
+          <div class="wheel-pointer" aria-hidden="true"></div>
+          <div class="wheel-upgrade-banner" id="wheel-upgrade-banner">×2</div>
         </div>
 
-        <div class="modal-actions wheel-actions">
-          <button class="btn-primary btn-large wheel-spin-btn" id="btn-wheel-spin">免费转动</button>
+        <div class="wheel-actions">
+          <p class="wheel-quota-text" id="wheel-quota-text"></p>
+          <button class="wheel-spin-btn" id="btn-wheel-spin" type="button">Spin</button>
+          <p class="wheel-reward-toast" id="wheel-reward-toast" aria-live="polite"></p>
         </div>
       </div>
     </div>
@@ -565,29 +531,72 @@
       </div>
     </div>
 
-    <section class="mountain-overlay" id="mountain-start" role="dialog" aria-modal="true" aria-labelledby="mountain-start-title" hidden>
-      <div class="mountain-start-card">
-        <button type="button" id="mountain-start-close" aria-label="关闭">×</button>
-        <h2 id="mountain-start-title">Hard Challenge</h2>
-        <div class="mountain-start-reward">
-          <img src="assets/mountain/icon_paper_plan.png" alt="纸飞机">
-          <strong>×2</strong>
-        </div>
-        <p>通关困难关，沿山路向上攀登。</p>
-        <button type="button" class="btn-primary" id="mountain-watch">Watch <small>· 模拟广告</small></button>
-      </div>
-    </section>
     <section class="mountain-overlay" id="mountain-progress" role="dialog" aria-modal="true" aria-labelledby="mountain-title" hidden>
-      <div class="mountain-content">
-        <h2 id="mountain-title">Hard Challenge</h2>
-        <div class="mountain-clock"><span class="mountain-clock-icon" aria-hidden="true"><img src="assets/mountain/icon_game_bouns_time2.png" alt=""></span><span id="mountain-clock"></span></div>
-        <div id="mountain-reward" aria-live="polite"></div>
-        <div id="mountain-map" aria-hidden="true"></div>
-        <p class="mountain-ranking">击败 <strong id="mountain-score"></strong>% 的玩家</p>
-        <p id="mountain-step"></p>
-        <p id="mountain-caption"></p>
+      <button type="button" id="mountain-dismiss" aria-label="返回">←</button>
+      <button type="button" id="mountain-help" aria-label="活动说明" aria-controls="mountain-rules" aria-expanded="false">?</button>
+      <p id="mountain-rules" hidden>每期 29 天。通关获得 1 积分，达到门槛就会前往下一个登山节点。</p>
+      <div class="mountain-scene">
+        <header class="mountain-header">
+          <h2 id="mountain-title">Summit Race</h2>
+          <p id="mountain-clock"></p>
+        </header>
+        <svg id="mountain-map" viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <image id="summit-walker" href="assets/mountain/summit-walker.png" x="-54" y="-93" width="108" height="108" />
+          </defs>
+          <image id="mountain-art" href="assets/mountain/summit-scene.jpg" width="1536" height="1024" />
+          <g class="mountain-route" fill="none">
+            <path d="M370 838 Q423 790 505 765 Q530 759 558 731" />
+            <path d="M558 731 C670 710 632 653 753 615 Q824 590 795 541" />
+            <path d="M795 541 C776 507 732 471 811 432 Q955 381 911 343 Q859 304 858 253" />
+          </g>
+          <g class="mountain-route-marks">
+            <circle cx="558" cy="731" r="12" />
+            <circle cx="795" cy="541" r="12" />
+            <circle cx="921" cy="364" r="12" />
+            <circle cx="858" cy="253" r="12" />
+            <g class="mountain-route-flags">
+              <text x="581" y="711">25%</text>
+              <text x="817" y="526">50%</text>
+              <text x="946" y="348">75%</text>
+            </g>
+          </g>
+          <g class="mountain-hikers">
+            <g transform="translate(462 806)"><use href="#summit-walker" /></g>
+            <g transform="translate(599 722)"><use href="#summit-walker" /></g>
+            <g transform="translate(700 657)"><use href="#summit-walker" /></g>
+            <g transform="translate(837 566)"><use href="#summit-walker" /></g>
+            <g transform="translate(768 482)"><use href="#summit-walker" /></g>
+            <g transform="translate(873 403)"><use href="#summit-walker" /></g>
+            <g transform="translate(891 306)"><use href="#summit-walker" /></g>
+          </g>
+          <g id="mountain-climber"><use href="#summit-walker" /></g>
+        </svg>
+        <p id="mountain-percentile"></p>
       </div>
-      <button type="button" id="mountain-dismiss" aria-label="继续或关闭登山进度"></button>
+      <div class="mountain-standings">
+        <div id="mountain-board">
+          <h3>Leaderboards</h3>
+          <ol id="mountain-leaderboard" tabindex="0" aria-label="模拟对手的积分排行"></ol>
+          <div id="mountain-player-row" aria-label="我的排名"></div>
+        </div>
+        <div id="mountain-camp-summary" hidden>
+          <div class="mountain-distance">
+            <img src="assets/mountain/score-icon.png" width="44" height="44" alt="" />
+            <div>
+              <span>已爬距离</span>
+              <strong id="mountain-distance"></strong>
+            </div>
+          </div>
+          <p id="mountain-next-distance"></p>
+          <progress id="mountain-leg-progress" max="100" aria-label="本段登山进度"></progress>
+          <dl class="mountain-camp-stats">
+            <div><dt>营地玩家</dt><dd id="mountain-camp-count"></dd></div>
+            <div><dt>当前排名</dt><dd id="mountain-camp-ranking"></dd></div>
+          </dl>
+        </div>
+        <button id="mountain-play" type="button">Start</button>
+      </div>
     </section>
 
     <canvas id="fx"></canvas>
