@@ -1,323 +1,603 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>字页 · Word Pages</title>
-<meta name="description" content="书页风格的单词连线谜题：上下左右滑动字母，用尽每一块字砖。">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="i18n.js"></script>
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="skins.css">
-<link rel="stylesheet" href="skins-classic.css">
-<link rel="stylesheet" href="skins-wood.css">
-<link rel="stylesheet" href="skins-photo.css">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/app-icon-32.png">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/app-icon-192.png">
-<link rel="apple-touch-icon" href="assets/app-icon-180.png">
-<script>
-  // 皮肤：在页面渲染前套用，避免闪烁；各皮肤的字体按需加载
-  window.SKINS = [
-    {id:'book', name:'书页', icon:'Aa'},
-    {id:'classic', name:'典藏', icon:'Aa'},
-    {id:'typewriter', name:'复古打字机', icon:'A', font:'Special+Elite&family=Courier+Prime:wght@400;700'},
-    {id:'keyboard', name:'键盘', icon:'A', font:'JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@400;700'},
-    {id:'glass', name:'液态玻璃', icon:'A', font:'Inter:wght@400;600;700&family=Noto+Sans+SC:wght@400;700'},
-    {id:'cartoon', name:'卡通', icon:'A', font:'Fredoka:wght@500;700&family=ZCOOL+KuaiLe'},
-    {id:'wood', name:'木纹', icon:'Aa', font:'Alegreya:wght@500;700'},
-    {id:'kyoto', name:'京都', icon:'A', font:'Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;700'},
-    {id:'alps', name:'阿尔卑斯', icon:'A', font:'Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;700'}
-  ];
-  window.applySkin = function(id){
-    var sk = SKINS.filter(function(x){ return x.id === id; })[0] || SKINS[0];
-    document.documentElement.setAttribute('data-skin', sk.id);
-    if (sk.font && !document.getElementById('font-' + sk.id)) {
-      var l = document.createElement('link');
-      l.id = 'font-' + sk.id; l.rel = 'stylesheet';
-      l.href = 'https://fonts.googleapis.com/css2?family=' + sk.font + '&display=swap';
-      document.head.appendChild(l);
-    }
-    if (window.syncIcons) syncIcons();
-    try { localStorage.setItem('wordpages.skin', sk.id); } catch (e) {}
-    return sk.id;
-  };
-  try { applySkin(localStorage.getItem('wordpages.skin') || 'book'); } catch (e) { applySkin('book'); }
-</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Word Logic Puzzle</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="mountain.css" />
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20 4c-6 0-11 4-12.5 10L6 18.5M20 4c0 6-4 11-10 12.5M20 4 8.5 15.5M4 20l2-1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/></symbol>
-    <symbol id="i-notes" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM15 3v4h4M9 11h7M9 14.5h7M9 18h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol>
-    <symbol id="i-book" viewBox="0 0 24 24"><path d="M3 5.5C6 4 9 4 12 6c3-2 6-2 9-.5V19c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5zM12 6v13.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
-    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z" fill="currentColor"/></symbol>
-    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M4 12h10a6 6 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -3)"/></symbol>
-    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
-    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
-    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
-    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.5h2M11 16.5h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
-    <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-    <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-    <symbol id="i-arrow-r" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-    <symbol id="i-coin" viewBox="0 0 24 24"><ellipse cx="12" cy="7" rx="7" ry="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
-    <symbol id="i-ring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2a6 6 0 0 0 0 11.6M14 6.2a6 6 0 0 1 0 11.6" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
-    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12.5H6zM9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
-    <symbol id="i-pack" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0v11H6zM9.5 4.2V3.5h5v.7M6 13h12M10 13v2.5h4V13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
-    <symbol id="fleuron" viewBox="0 0 64 16"><path d="M2 8h18M44 8h18" stroke="currentColor" stroke-width="1"/><circle cx="23" cy="8" r="1.4" fill="currentColor"/><circle cx="41" cy="8" r="1.4" fill="currentColor"/><path d="M32 1c4 3 4 11 0 14c-4-3-4-11 0-14z" fill="currentColor"/></symbol>
-  </defs>
-</svg>
-<!-- 典藏皮肤图标：切到 classic 时替换上面同名 symbol 的内容 -->
-<svg id="sprite-classic" width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <symbol id="classic-i-feather" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21 15 10M7 17C4 9 12 2 21 3c0 9-7 17-14 14ZM10 14l-1-5m4 2 5 1"/></g></symbol>
-    <symbol id="classic-i-spark" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><path d="M12 3v5m0 8v5M3 12h5m8 0h5M5.6 5.6l3.5 3.5m5.8 5.8 3.5 3.5M5.6 18.4l3.5-3.5m5.8-5.8 3.5-3.5"/></g></symbol>
-    <symbol id="classic-i-notes" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H5V4q0-1 1-1ZM15 3v5h4M8 11h8m-8 4h6m-6 3h4"/></g></symbol>
-    <symbol id="classic-i-undo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m8 4-5 5 5 5M3 9h10a7 7 0 0 1 0 14" transform="translate(0 -2)"/></g></symbol>
-    <symbol id="classic-i-book" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v15M3 4c4-1 6 0 9 2 3-2 5-3 9-2v14c-4-1-6 0-9 2-3-2-5-3-9-2ZM6 8c1.5 0 2.5.4 3 1m6 0c.5-.6 1.5-1 3-1M6 12l3 1m6 0 3-1"/></g></symbol>
-    <symbol id="classic-i-gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10 3 .5 2h3L14 3l3 1.5-.7 2 2.2 2.2 2-.7L22 11l-2 .5v3l2 .5-1.5 3-2-.7-2.2 2.2.7 2L14 23l-.5-2h-3L10 23l-3-1.5.7-2-2.2-2.2-2 .7L2 15l2-.5v-3L2 11l1.5-3 2 .7 2.2-2.2-.7-2Z" transform="translate(1 0) scale(.92)"/><circle cx="12" cy="12" r="3.3"/></g></symbol>
-    <symbol id="classic-i-close" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></g></symbol>
-    <symbol id="classic-i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></g></symbol>
-    <symbol id="classic-i-drop" viewBox="0 0 24 24"><g><path d="M12 2C10 6 5 11 5 15a7 7 0 0 0 14 0c0-4-5-9-7-13Z" fill="currentColor"/><path d="M8.5 14q-.8 2.6 1.6 3.6" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-linecap="round"/></g></symbol>
-    <symbol id="classic-fleuron" viewBox="0 0 64 24"><g fill="none" stroke="currentColor" stroke-width=".8" stroke-linecap="round"><path d="M3 12h12m34 0h12M18 12c5 0 8-4 14-4s9 4 14 4c-5 0-8 4-14 4s-9-4-14-4ZM32 8V3m0 13v5M26 8c-3-6-8-5-8-5 0 4 3 7 8 5Zm12 0c3-6 8-5 8-5 0 4-3 7-8 5Z"/><circle cx="16" cy="12" r="1" fill="currentColor"/><circle cx="48" cy="12" r="1" fill="currentColor"/></g></symbol>
-  </defs>
-</svg>
-<script>
-  window.syncIcons = function(){
-    var on = document.documentElement.getAttribute('data-skin') === 'classic';
-    var alt = document.getElementById('sprite-classic'); if (!alt) return;
-    alt.querySelectorAll('symbol').forEach(function(s){
-      var t = document.getElementById(s.id.slice(8)); if (!t) return;
-      if (!t._orig) t._orig = {html: t.innerHTML, vb: t.getAttribute('viewBox')};
-      var src = on ? {html: s.innerHTML, vb: s.getAttribute('viewBox')} : t._orig;
-      t.innerHTML = src.html; t.setAttribute('viewBox', src.vb);
-    });
-  };
-  syncIcons();
-</script>
+  <!-- 左侧手机屏幕外区域：测试信息与功能面板 -->
+  <aside class="debug-panel" id="debug-panel" aria-label="测试信息与调试面板">
+    <div class="dbg-title">测试控制面板</div>
 
-<div id="app">
-
-  <!-- 封面 -->
-  <section id="home" class="screen active">
-    <div class="cover">
-      <div class="cover-frame">
-        <!-- 实景皮肤（京都 / 阿尔卑斯）专用的封面元素，其它皮肤隐藏 -->
-        <div class="ph ph-brand">WordTile</div>
-        <div class="ph ph-hero">
-          <div class="ph-cap"><span class="ph-country"></span> · CHAPTER <span id="phChap">01</span></div>
-          <div class="ph-place"></div>
-          <div class="ph-rule"></div>
-          <div class="ph-count" id="phCount">1 / 20</div>
-        </div>
-        <div class="ph ph-side">
-          <button class="ph-round" id="phSet" aria-label="设置" data-i18n-aria="aria.settings"><svg><use href="#i-gear"/></svg></button>
-          <button class="ph-round" id="phDaily" aria-label="每日一页" data-i18n-aria="cover.daily"><svg><use href="#i-cal"/></svg></button>
-          <button class="ph-round ph-dict" id="phDict" aria-label="我的词典" data-i18n-aria="cover.dict"><svg><use href="#i-book"/></svg><span data-i18n="ph.dict">词典</span></button>
-        </div>
-        <div class="cover-orn"><svg class="fleuron" aria-hidden="true"><use href="#fleuron"/></svg></div>
-        <h1 class="cover-title" data-i18n-html="cover.title">字&nbsp;页</h1>
-        <div class="cover-sub" data-i18n-html="cover.sub">WORD&nbsp;&nbsp;TILES</div>
-        <div class="cover-rule"></div>
-        <p class="cover-tag" id="coverTag">一本关于字母的安静小书</p>
-        <div class="cover-actions">
-          <button class="plate primary" id="btnContinue"><span class="plate-main" data-i18n="cover.continue">继续阅读</span><span class="plate-sub" id="contSub">第 1 页</span><span class="ph ph-cont-lvl">LEVEL <span class="phLvl">01</span></span><span class="ph ph-cont-main" data-i18n="ph.continue">继续旅程</span><span class="ph ph-bar"><i id="phBar"></i></span><span class="ph ph-bar-n" id="phBarN">1 / 20</span><span class="ph ph-go"><svg class="k"><use href="#i-arrow-r"/></svg><svg class="a"><use href="#i-chev-r"/></svg></span></button>
-          <button class="plate" id="btnToc" data-i18n="cover.toc">目 录</button>
-          <button class="plate" id="btnDaily" data-i18n="cover.daily">每日一页</button>
-          <button class="plate" id="btnDict" data-i18n="cover.dict">我的词典</button>
-        </div>
-        <div class="cover-foot">
-          <span class="ink-count"><svg><use href="#i-drop"/></svg><svg class="ph-coin"><use href="#i-coin"/></svg><b class="ink-val">0</b></span>
-          <button class="icon-btn light" id="btnSettings" aria-label="设置" data-i18n-aria="aria.settings"><svg><use href="#i-gear"/></svg></button>
-        </div>
+    <!-- 1. 虚拟时间（年月日周时间） -->
+    <div class="dbg-section">
+      <div class="dbg-sec-head">
+        <span class="dbg-sec-label">1. 虚拟时间</span>
+        <span class="dbg-badge" id="dbg-time-offset-tag">实时</span>
+      </div>
+      <div class="dbg-time-box" id="dbg-virtual-time">2026年11月09日 周一 09:32:00</div>
+      <div class="dbg-btn-grid">
+        <button class="dbg-btn" type="button" data-dbg-time="3600000">+1小时</button>
+        <button class="dbg-btn" type="button" data-dbg-time="21600000">+6小时</button>
+        <button class="dbg-btn" type="button" data-dbg-time="86400000">+1天</button>
+        <button class="dbg-btn" type="button" data-dbg-time="-86400000">-1天</button>
+        <button class="dbg-btn dbg-btn-span2" type="button" id="dbg-time-reset">重置为当前真实时间</button>
       </div>
     </div>
-  </section>
 
-  <!-- 目录 -->
-  <section id="toc" class="screen">
-    <div class="sheet">
-      <header class="sheet-head">
-        <button class="icon-btn" data-back aria-label="返回" data-i18n-aria="aria.back"><svg><use href="#i-close"/></svg></button>
-        <h2 data-i18n-html="toc.title">目&nbsp;&nbsp;录</h2>
-        <span class="ink-count"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
-      </header>
-      <div class="sheet-body" id="tocList"></div>
-    </div>
-  </section>
-
-  <!-- 每日一页 -->
-  <section id="daily" class="screen">
-    <div class="sheet narrow">
-      <header class="sheet-head">
-        <button class="icon-btn" data-back aria-label="返回" data-i18n-aria="aria.back"><svg><use href="#i-close"/></svg></button>
-        <h2 data-i18n="daily.title">每日一页</h2>
-        <span class="ink-count"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
-      </header>
-      <div class="sheet-body daily-body">
-        <div class="diary-date">
-          <div class="diary-month" id="dMonth"></div>
-          <div class="diary-day" id="dDay"></div>
-          <div class="diary-week" id="dWeek"></div>
+    <!-- 2. 当前开启的活动 -->
+    <div class="dbg-section">
+      <div class="dbg-sec-head">
+        <span class="dbg-sec-label">2. 当前开启的活动</span>
+      </div>
+      <div class="dbg-status-list" id="dbg-active-events">
+        <div class="dbg-status-row">
+          <span class="dbg-status-name">收集活动</span>
+          <span class="dbg-status-val" id="dbg-status-collect">未开启</span>
         </div>
-        <div class="diary-stats">
-          <div><b id="dStreak">0</b><span data-i18n="daily.streak">连续天数</span></div>
-          <div><b id="dTotal">0</b><span data-i18n="daily.total">累计完成</span></div>
+        <div class="dbg-status-row">
+          <span class="dbg-status-name">锦标赛</span>
+          <span class="dbg-status-val" id="dbg-status-tournament">未开启</span>
         </div>
-        <div class="week-strip" id="dWeekStrip"></div>
-        <button class="plate primary" id="btnDailyPlay">翻开今日一页</button>
+        <div class="dbg-status-row">
+          <span class="dbg-status-name">每日签到</span>
+          <span class="dbg-status-val" id="dbg-status-daily">未完成</span>
+        </div>
+        <div class="dbg-status-row">
+          <span class="dbg-status-name">幸运转盘</span>
+          <span class="dbg-status-val" id="dbg-status-wheel">LV.1 · 6/6</span>
+        </div>
+        <div class="dbg-status-row">
+          <span class="dbg-status-name">激流勇进</span>
+          <span class="dbg-status-val" id="dbg-status-rapids">未开启</span>
+        </div>
+      </div>
+      <div class="dbg-btn-grid">
+        <button class="dbg-btn" type="button" id="dbg-toggle-collect">开关收集活动</button>
+        <button class="dbg-btn" type="button" id="dbg-add-collect">收集进度 +1</button>
+        <button class="dbg-btn" type="button" id="dbg-toggle-tournament">开关锦标赛</button>
+        <button class="dbg-btn" type="button" id="dbg-add-tournament-pt">锦标赛 +5分</button>
+        <button class="dbg-btn" type="button" id="dbg-toggle-rapids">开关激流勇进</button>
+        <button class="dbg-btn" type="button" id="dbg-add-rapids">激流 +5关(测结算)</button>
+        <button class="dbg-btn" type="button" id="dbg-reset-daily">重置今日签到</button>
+        <button class="dbg-btn" type="button" id="dbg-reset-wheel">重置转盘状态</button>
       </div>
     </div>
-  </section>
 
-  <!-- 词典 -->
-  <section id="dict" class="screen">
-    <div class="sheet">
-      <header class="sheet-head">
-        <button class="icon-btn" data-back aria-label="返回" data-i18n-aria="aria.back"><svg><use href="#i-close"/></svg></button>
-        <h2 data-i18n="dict.title">我的词典</h2>
-        <span class="dict-count" id="dictCount"></span>
-      </header>
-      <div class="dict-search"><input id="dictQ" type="search" placeholder="查找已收录的单词…" data-i18n-ph="dict.search" autocomplete="off"></div>
-      <div class="sheet-body" id="dictList"></div>
+    <!-- 3. 增加/减少金币 & 数据重置 -->
+    <div class="dbg-section">
+      <div class="dbg-sec-head">
+        <span class="dbg-sec-label">3. 金币调节</span>
+        <span class="dbg-coin-val" id="dbg-coin-val">2,450</span>
+      </div>
+      <div class="dbg-btn-grid dbg-btn-grid-3">
+        <button class="dbg-btn" type="button" data-dbg-coin="20">+20</button>
+        <button class="dbg-btn" type="button" data-dbg-coin="100">+100</button>
+        <button class="dbg-btn" type="button" data-dbg-coin="1000">+1000</button>
+        <button class="dbg-btn dbg-btn-minus" type="button" data-dbg-coin="-20">-20</button>
+        <button class="dbg-btn dbg-btn-minus" type="button" data-dbg-coin="-100">-100</button>
+        <button class="dbg-btn dbg-btn-minus" type="button" data-dbg-coin="-1000">-1000</button>
+      </div>
+      <div class="mountain-debug">
+        <label><input id="dbg-mountain-enabled" type="checkbox" checked> 登山</label>
+        <label>分组
+          <select id="dbg-mountain-group">
+            <option value="3">3 · 关键步加成</option>
+            <option value="0">0 · 基础奖励</option>
+            <option value="2">2 · 剩余时间奖励</option>
+          </select>
+        </label>
+      </div>
+      <button class="dbg-btn dbg-btn-danger" type="button" id="dbg-reset-all">重置所有数据</button>
     </div>
-  </section>
+  </aside>
 
-  <!-- 关卡编辑器（大厅按空格 / 长按封面标题） -->
-  <section id="editor" class="screen">
-    <div class="sheet wide">
-      <header class="sheet-head">
-        <button class="icon-btn" data-back aria-label="返回" data-i18n-aria="aria.back"><svg><use href="#i-close"/></svg></button>
-        <h2 data-i18n="ed.title">关卡编辑器</h2>
-        <span class="ed-hint" data-i18n="ed.esc">Esc 返回</span>
+  <!-- 右侧手机屏幕外区域：进入游戏后显示的局内测试按钮 -->
+  <aside class="debug-game-panel" id="debug-game-panel" aria-label="局内测试操作面板">
+    <div class="dbg-title">局内测试操作</div>
+    <div class="dbg-section dbg-game-section">
+      <button class="dbg-btn dbg-game-btn dbg-game-btn-primary" type="button" id="dbg-game-win">快速通关</button>
+      <button class="dbg-btn dbg-game-btn" type="button" id="dbg-game-fill-word">快速填词</button>
+      <button class="dbg-btn dbg-game-btn" type="button" id="dbg-game-undo">撤销</button>
+    </div>
+  </aside>
+
+  <div class="phone-frame">
+    <!-- 1. 游戏大厅 -->
+    <section id="screen-lobby" class="screen active">
+      <header class="lobby-top">
+        <div class="player-badge" id="btn-player-profile" role="button" tabindex="0" aria-label="个人信息">
+          <div class="avatar" id="lobby-avatar"></div>
+          <div class="player-meta">
+            <span class="player-level" id="lobby-level">Lv.1</span>
+            <div class="exp-bar"><div class="exp-fill"></div></div>
+          </div>
+        </div>
+        <div class="currency-group">
+          <div class="currency-pill">
+            <span class="icon-coin"></span>
+            <span id="lobby-coins">2,450</span>
+          </div>
+        </div>
       </header>
-      <div class="sheet-body ed-body">
-        <div class="ed-col ed-board">
+
+      <main class="lobby-stage">
+        <h1 class="game-logo" id="game-logo" role="button" tabindex="0" aria-label="打开关卡编辑器">
+          <span class="logo-mark" aria-hidden="true">
+            <svg class="logo-link" viewBox="0 0 200 76"><path d="M26 50 L74 26 L126 50 L174 26"/></svg>
+            <span class="logo-tile t1">W</span>
+            <span class="logo-tile t2">O</span>
+            <span class="logo-tile t3">R</span>
+            <span class="logo-tile t4">D</span>
+          </span>
+          <span class="logo-word">LOGIC</span>
+          <span class="logo-sub">puzzle</span>
+        </h1>
+        <button class="btn-daily-entry" id="btn-daily-checkin" aria-label="每日签到">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="17" rx="3"></rect>
+            <path d="M8 2v4M16 2v4M3 9h18"></path>
+            <path d="M9 14l2 2 4-4"></path>
+          </svg>
+          <span class="daily-entry-label" id="daily-entry-label">每日签到</span>
+        </button>
+
+        <!-- 大厅左侧挂载：收集活动入口 -->
+        <button class="btn-event-entry" id="btn-event-entry" aria-label="收集活动">
+          <span class="event-entry-icon" aria-hidden="true">
+            <svg class="icon" viewBox="0 0 24 24">
+              <rect x="3" y="8" width="18" height="13" rx="2"></rect>
+              <path d="M12 8v13M3 12h18"></path>
+              <path d="M12 8c-2-3-5-3-5-1s3 1 5 1c2 0 5 1 5-1s-3-2-5 1z"></path>
+            </svg>
+          </span>
+        </button>
+
+        <!-- 大厅左侧挂载（收集活动下方）：转盘入口 -->
+        <button class="btn-wheel-entry" id="btn-wheel-entry" aria-label="幸运转盘">
+          <span class="wheel-entry-icon" aria-hidden="true">
+            <svg class="icon" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9"></circle>
+              <circle cx="12" cy="12" r="2.2"></circle>
+              <path d="M12 3v6.8M12 14.2V21M4.2 7.5l5.9 3.4M13.9 13.1l5.9 3.4M19.8 7.5l-5.9 3.4M10.1 13.1l-5.9 3.4"></path>
+            </svg>
+          </span>
+        </button>
+
+        <!-- 大厅右侧挂载：锦标赛入口 -->
+        <button class="btn-tournament-entry" id="btn-tournament-entry" aria-label="锦标赛">
+          <span class="tournament-entry-icon" aria-hidden="true">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M8 21h8M12 17v4"></path>
+              <path d="M7 4h10v5a5 5 0 0 1-10 0V4z"></path>
+              <path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3"></path>
+            </svg>
+          </span>
+        </button>
+
+        <!-- 大厅右侧挂载（锦标赛下方）：激流勇进活动入口 -->
+        <button class="btn-rapids-entry" id="btn-rapids-entry" aria-label="激流勇进">
+          <span class="rapids-entry-icon" aria-hidden="true">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M12 3l6 11H6L12 3z"></path>
+              <path d="M4 17h16l-2 3H6l-2-3z"></path>
+              <path d="M2 22c2-1 4-1 6 0s4 1 6 0 4-1 6 0"></path>
+            </svg>
+          </span>
+        </button>
+      </main>
+
+      <footer class="lobby-bottom">
+        <button class="btn-primary btn-start" id="btn-start-game"><span id="start-level-label">Level 1</span><span class="mountain-badge" hidden></span></button>
+        <button type="button" id="mountain-access" hidden>登山进度</button>
+      </footer>
+    </section>
+
+    <!-- 2. 游戏内界面 -->
+    <section id="screen-game" class="screen">
+      <header class="game-hud">
+        <div class="hud-left-group">
+          <button class="btn-icon" id="btn-pause" aria-label="设置"><svg class="icon" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+          <div class="hud-event-icon" id="hud-event-icon" aria-label="收集活动进度">
+            <svg class="hud-event-ring" viewBox="0 0 50 50" aria-hidden="true">
+              <circle class="hud-event-ring-track" cx="25" cy="25" r="22"></circle>
+              <circle class="hud-event-ring-bar" id="hud-event-ring-bar" cx="25" cy="25" r="22"></circle>
+            </svg>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="8" width="18" height="13" rx="2"></rect>
+              <path d="M12 8v13M3 12h18"></path>
+              <path d="M12 8c-2-3-5-3-5-1s3 1 5 1c2 0 5 1 5-1s-3-2-5 1z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="game-level-title" id="game-level-id">Level 1</div>
+        <div class="currency-pill" id="game-coins-pill">
+          <span class="icon-coin"></span>
+          <span id="game-coins">2,450</span>
+        </div>
+      </header>
+      <div class="event-hud-toast" id="event-hud-toast"></div>
+
+      <main class="game-play-area">
+        <!-- 上方：目标区 -->
+        <section class="target-zone">
+          <div class="target-words" id="target-words"></div>
+          <div class="current-word-bar" id="current-word-bar"></div>
+        </section>
+
+        <!-- 下方：棋盘区 (3行4列) -->
+        <section class="board-zone">
+          <div class="board-container" id="board-container">
+            <div class="board-shadow"></div>
+            <div class="board-collectibles" id="board-collectibles"></div>
+            <svg class="board-lines" id="board-lines"></svg>
+            <div class="board-grid" id="board-grid"></div>
+          </div>
+          <div class="board-tools">
+            <div id="mountain-tools" aria-label="登山道具">
+              <button type="button" data-mountain-tool="hint" hidden></button>
+              <button type="button" data-mountain-tool="plane" hidden></button>
+              <button type="button" data-mountain-tool="firework" hidden></button>
+            </div>
+            <button class="btn-bonus" id="btn-bonus-words" aria-label="额外词库">
+              <svg class="bonus-ring" viewBox="0 0 54 54" aria-hidden="true">
+                <circle class="bonus-ring-track" cx="27" cy="27" r="24"></circle>
+                <circle class="bonus-ring-bar" id="bonus-ring-bar" cx="27" cy="27" r="24"></circle>
+              </svg>
+              <span class="bonus-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 7c-1.8-1.3-4-2-7-2v12c3 0 5.2.7 7 2 1.8-1.3 4-2 7-2V5c-3 0-5.2.7-7 2z"/><path d="M12 7v12"/></svg></span>
+            </button>
+            <button class="btn-hint" id="btn-hint" aria-label="提示"><svg class="icon" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg></button>
+          </div>
+        </section>
+      </main>
+
+      <!-- 额外词弹窗 -->
+      <div class="modal-overlay" id="modal-bonus">
+        <div class="modal-card">
+          <div class="modal-title">额外词</div>
+          <div class="bonus-words-list" id="bonus-words-list"></div>
+          <div class="modal-actions">
+            <button class="btn-primary" id="btn-close-bonus">关闭</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 设置弹窗 -->
+      <div class="modal-overlay" id="modal-pause">
+        <div class="modal-card">
+          <div class="modal-title">设置</div>
+          <div class="settings-group">
+            <div class="setting-row">
+              <label>选中配色</label>
+              <div class="swatches" id="swatches"></div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-secondary" id="btn-toggle-sound">音效: 开</button>
+            <button class="btn-primary" id="btn-resume">继续</button>
+            <button class="btn-ghost" id="btn-quit-to-lobby">退出</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 游戏结算界面 -->
+    <section id="screen-result" class="screen">
+      <div class="result-container">
+        <div class="result-logo">
+          <div class="result-logo-emblem" aria-hidden="true"></div>
+          <div class="result-banner" id="result-title">VICTORY</div>
+        </div>
+
+        <div class="result-quote-card">
+          <div class="quote-mark">“</div>
+          <p class="quote-text" id="result-quote">每一次思考的连接，都是通往智慧的阶梯。</p>
+        </div>
+
+        <div class="result-chest-card" id="result-chest-card">
+          <div class="result-chest-top">
+            <div class="result-chest-title-wrap">
+              <span class="result-chest-icon" id="result-chest-icon" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <rect x="3" y="8" width="18" height="12" rx="2"></rect>
+                  <path d="M3 12h18M7 4h10l4 4H3l4-4z"></path>
+                  <rect x="10" y="10" width="4" height="4" rx="1"></rect>
+                </svg>
+              </span>
+              <span class="result-chest-label" id="result-chest-label">关卡宝箱</span>
+            </div>
+            <span class="result-chest-step" id="result-chest-step">1 / 5</span>
+          </div>
+          <div class="result-chest-bar-row">
+            <div class="result-chest-track">
+              <div class="result-chest-fill" id="result-chest-fill"></div>
+            </div>
+            <div class="result-chest-reward" id="result-chest-reward">
+              <span class="icon-coin"></span>
+              <span>20</span>
+            </div>
+          </div>
+        </div>
+
+        <p id="mountain-result-coins" hidden></p>
+        <div class="result-actions">
+          <button class="btn-primary btn-large" id="btn-replay">再来一局<span class="mountain-badge" hidden></span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 关卡编辑器 -->
+    <section id="screen-editor" class="screen">
+      <header class="ed-head">
+        <button class="btn-icon" id="ed-back" aria-label="返回"><svg class="icon" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="ed-title">关卡编辑器</div>
+        <div class="ed-head-space"></div>
+      </header>
+      <div class="ed-scroll">
+        <div class="ed-card ed-gen">
           <div class="ed-row">
-            <span class="ed-label" data-i18n="ed.size">尺寸</span>
-            <span class="stepper"><span data-i18n="ed.w">宽</span><button data-dim="W" data-d="-1">−</button><b id="edW">4</b><button data-dim="W" data-d="1">+</button></span>
-            <span class="stepper"><span data-i18n="ed.h">高</span><button data-dim="H" data-d="-1">−</button><b id="edH">3</b><button data-dim="H" data-d="1">+</button></span>
+            <label>关卡序号</label>
+            <input type="number" id="ed-level-no" min="1" value="1" />
+            <label>尺寸</label>
+            <select id="ed-size"><option value="3x4">3×4</option><option value="3x5">3×5</option></select>
           </div>
-          <div class="ed-row">
-            <span class="ed-label" data-i18n="ed.brush">画笔</span>
-            <span class="seg" id="edMode">
-              <button data-mode="letter" class="on" data-i18n="ed.letter">字母</button>
-              <button data-mode="0" data-i18n="ed.curtA">幕布 A</button>
-              <button data-mode="1" data-i18n="ed.curtB">幕布 B</button>
-            </span>
-            <label class="ed-req" id="edReqWrap" hidden><span data-i18n="ed.req1">揭开需</span> <input type="number" id="edReq" min="1" max="30" value="2"> <span data-i18n="ed.req2">词</span></label>
+          <div class="ed-profile" id="ed-profile"></div>
+          <div class="ed-row ed-btns">
+            <button class="btn-primary ed-btn" id="ed-generate">自动生成</button>
+            <button class="btn-secondary ed-btn" id="ed-analyze">分析</button>
           </div>
-          <div class="ed-grid-wrap"><div class="ed-grid" id="edGrid"></div></div>
-          <div class="ed-row center">
-            <button class="ed-btn" id="edRandom" data-i18n="ed.random">随机补全空格</button>
-            <button class="ed-btn" id="edClearLetters" data-i18n="ed.clear">清空字母</button>
-          </div>
-          <ul class="ed-status" id="edStatus"></ul>
         </div>
+        <div class="ed-board" id="ed-board"></div>
+        <div class="ed-card ed-cell-edit">
+          <label>选中格</label>
+          <input type="text" id="ed-letter" maxlength="1" placeholder="字母" autocomplete="off" />
+          <label>层数</label>
+          <button class="btn-icon ed-step" id="ed-layer-minus" aria-label="减少">−</button>
+          <span id="ed-layer-val">1</span>
+          <button class="btn-icon ed-step" id="ed-layer-plus" aria-label="增加">+</button>
+        </div>
+        <div class="ed-card">
+          <label>目标词（空格或逗号分隔）</label>
+          <input type="text" id="ed-targets" class="ed-wide" autocomplete="off" />
+        </div>
+        <div class="ed-card ed-report" id="ed-report">点击"自动生成"或"分析"</div>
+        <div class="ed-row ed-btns">
+          <button class="btn-primary ed-btn" id="ed-play">试玩</button>
+          <button class="btn-secondary ed-btn" id="ed-copy">复制 JSON</button>
+        </div>
+      </div>
+    </section>
 
-        <div class="ed-col ed-side">
-          <input class="ed-name" id="edName" placeholder="给这一页起个名字（可选）" data-i18n-ph="ed.name" maxlength="24" autocomplete="off">
-          <div class="ed-sec"><span data-i18n-html="ed.words">词&nbsp;表</span><i id="edWordCount">0</i></div>
-          <form class="ed-add" id="edAddForm" autocomplete="off">
-            <input id="edWordIn" placeholder="输入单词，回车添加" data-i18n-ph="ed.wordIn" autocapitalize="characters" spellcheck="false">
-            <button class="ed-btn" type="submit" data-i18n="ed.add">添加</button>
-          </form>
-          <div class="chips" id="edWords"></div>
-
-          <div class="ed-sec"><span data-i18n="ed.onBoard">盘面中的单词</span><button class="text-btn" id="edScan" data-i18n="ed.rescan">重新查找</button></div>
-          <div class="chips sugg" id="edSugg"></div>
-          <div class="ed-tip"><span data-i18n="ed.clickAdd">点击加入词表；</span><button class="text-btn" id="edAllExtra" data-i18n="ed.allExtra">把剩下的都设为额外单词</button></div>
-
-          <div class="ed-sec"><span data-i18n="ed.extras">额外单词</span><i id="edExtraCount">0</i></div>
-          <div class="chips" id="edExtras"></div>
-
-          <div class="ed-actions">
-            <button class="plate primary" id="edPlay" data-i18n="ed.play">试 玩</button>
-            <button class="plate" id="edSave" data-i18n="ed.save">保 存</button>
+    <!-- 收集活动弹窗（大厅与游戏内共用） -->
+    <div class="modal-overlay" id="modal-event">
+      <div class="modal-card event-modal-card">
+        <button class="modal-close-btn" id="btn-close-event" aria-label="关闭">×</button>
+        <div class="event-banner" id="event-banner">
+          <button class="event-theme-nav prev" id="btn-event-prev" aria-label="上一主题">‹</button>
+          <div class="event-banner-body">
+            <div class="event-banner-tag">COLLECTION EVENT</div>
+            <div class="event-banner-title" id="event-theme-title">森林寻宝 · Wood</div>
+            <div class="event-banner-item-box" id="event-item-preview">松果木雕</div>
           </div>
-          <div class="ed-row center small">
-            <button class="text-btn" id="edNew" data-i18n="ed.new">新建</button>
-            <button class="text-btn" id="edExport" data-i18n="ed.export">导出</button>
-            <button class="text-btn" id="edImport" data-i18n="ed.import">导入</button>
+          <button class="event-theme-nav next" id="btn-event-next" aria-label="下一主题">›</button>
+        </div>
+        <div class="event-progress-box">
+          <div class="event-progress-top">
+            <span class="event-progress-label">收集进度</span>
+            <span class="event-progress-val" id="event-progress-text">0 / 5</span>
           </div>
-
-          <div class="ed-sec"><span data-i18n="ed.mine">我的关卡</span><i id="edSavedCount">0</i></div>
-          <div class="ed-saved" id="edSaved"></div>
+          <div class="event-progress-bar-row">
+            <div class="event-progress-track">
+              <div class="event-progress-fill" id="event-progress-fill"></div>
+            </div>
+            <div class="event-reward-tag">
+              <span class="icon-coin"></span>
+              <span>20</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary btn-large" id="btn-event-join">JOIN</button>
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- 游戏 -->
-  <section id="game" class="screen">
-    <div class="book-wrap">
-      <div class="book" id="book">
-        <div class="ph ph-ghead">
-          <div class="ph-gbar">
-            <button class="ph-round ph-back" data-back aria-label="返回" data-i18n-aria="aria.back"><svg><use href="#i-chev-l"/></svg></button>
-            <span class="ph-gbar-lvl">LEVEL <span class="phLvl">01</span></span>
-            <span class="ink-count ph-gcoin"><svg class="ph-coin"><use href="#i-coin"/></svg><b class="ink-val">0</b></span>
+    <!-- 锦标赛弹窗 -->
+    <div class="modal-overlay" id="modal-tournament">
+      <div class="modal-card tournament-modal-card">
+        <button class="modal-close-btn" id="btn-close-tournament" aria-label="关闭">×</button>
+        <div class="tournament-banner">
+          <div class="tournament-banner-tag" id="tournament-timer-text">24:00:00</div>
+          <div class="tournament-banner-title">每日锦标赛</div>
+          <div class="tournament-rewards-bar">
+            <div class="tournament-reward-pill rank-1">
+              <span class="t-medal">1</span>
+              <span class="icon-coin"></span>
+              <span>200</span>
+            </div>
+            <div class="tournament-reward-pill rank-2">
+              <span class="t-medal">2</span>
+              <span class="icon-coin"></span>
+              <span>100</span>
+            </div>
+            <div class="tournament-reward-pill rank-3">
+              <span class="t-medal">3</span>
+              <span class="icon-coin"></span>
+              <span>50</span>
+            </div>
           </div>
-          <div class="ph-gtitle">LEVEL <span class="phLvl">01</span></div>
-          <div class="ph-gplace"></div>
         </div>
-        <div class="page left" id="pageL">
-          <header class="run-head">
-            <button class="icon-btn" id="btnMenu" aria-label="目录" data-i18n-aria="aria.toc"><svg><use href="#i-book"/></svg></button>
-            <span class="chap" id="chapTitle"></span>
-            <span class="ink-count mobile-only"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
-          </header>
-          <div class="list-title"><span data-i18n-html="game.words">词&nbsp;表</span><button class="info-btn" id="btnInfo" title="本页信息" data-i18n="game.info" data-i18n-title="game.info">本页信息</button><i id="listProg">0 / 0</i><i class="ph ph-words" data-i18n="ph.words">words</i></div>
-          <div class="words" id="words"></div>
-          <div class="info" id="info" hidden></div>
-          <div class="footnote" id="footnote"></div>
-          <div class="folio desktop-only" id="folioL"></div>
-        </div>
-        <div class="page right" id="pageR">
-          <header class="run-head">
-            <span class="lvl" id="lvlTitle">第 1 页</span>
-            <span class="tag-hard" id="tagHard" hidden></span>
-            <span class="ink-count desktop-only"><svg><use href="#i-drop"/></svg><b class="ink-val">0</b></span>
-          </header>
-          <div class="current" id="current"><span class="cur-word" id="curWord"></span></div>
-          <div class="grid-wrap" id="gridWrap">
-            <div class="grid" id="grid"></div>
-            <div class="tip" id="tip" hidden></div>
-          </div>
-          <nav class="toolbar">
-            <button class="stamp" id="btnUndo" aria-label="撤回" data-i18n-aria="tool.undo"><svg><use href="#i-undo"/></svg><span data-i18n="tool.undo">撤回</span></button>
-            <button class="stamp" id="btnExtras" aria-label="页边批注" data-i18n-aria="tool.notesAria"><svg><use href="#i-notes"/></svg><svg class="ph-bagi"><use href="#i-bag"/></svg><svg class="ph-packi"><use href="#i-pack"/></svg><span data-i18n="tool.notes">批注</span><b class="ph ph-extra" data-i18n="ph.extra">额外词</b><em class="badge" id="extraBadge">0</em></button>
-            <button class="stamp" id="btnHint" aria-label="提示" data-i18n-aria="tool.hint"><svg><use href="#i-feather"/></svg><span data-i18n="tool.hint">提示</span><em class="cost">20</em></button>
-            <button class="stamp" id="btnFire" aria-label="烟花" data-i18n-aria="tool.fire"><svg><use href="#i-spark"/></svg><span data-i18n="tool.fire">烟花</span><em class="cost">60</em></button>
-          </nav>
-          <div class="folio" id="folioR"></div>
+
+        <div class="tournament-leaderboard" id="tournament-leaderboard"></div>
+
+        <div class="modal-actions tournament-actions">
+          <button class="btn-primary btn-large" id="btn-tournament-join">JOIN</button>
         </div>
       </div>
     </div>
-  </section>
 
-  <div class="toast" id="toast"></div>
-  <div class="modal" id="modal" hidden>
-    <div class="modal-card" role="dialog" aria-modal="true">
-      <h3 id="mTitle"></h3>
-      <div id="mBody"></div>
-      <div class="modal-btns" id="mBtns"></div>
+    <!-- 关卡结束：锦标赛排名变化小动画弹窗 -->
+    <div class="modal-overlay" id="modal-tournament-rankup">
+      <div class="modal-card tournament-rankup-card">
+        <div class="rankup-header">
+          <div class="rankup-title">锦标赛排名</div>
+        </div>
+        <div class="rankup-stage" id="rankup-stage">
+          <div class="rankup-list" id="rankup-list"></div>
+        </div>
+      </div>
     </div>
+
+    <!-- 幸运转盘弹窗 -->
+    <div class="modal-overlay" id="modal-wheel">
+      <div class="modal-card wheel-modal-card">
+        <button class="modal-close-btn" id="btn-close-wheel" aria-label="关闭">×</button>
+        <div class="wheel-header">
+          <div class="modal-title wheel-title">幸运转盘</div>
+        </div>
+
+        <div class="wheel-stage">
+          <div class="wheel-pointer" aria-hidden="true"></div>
+          <div class="wheel-upgrade-banner" id="wheel-upgrade-banner">×2</div>
+          <div class="wheel-disc" id="wheel-disc">
+            <div class="wheel-lines" aria-hidden="true">
+              <span class="w-line l0"></span>
+              <span class="w-line l1"></span>
+              <span class="w-line l2"></span>
+            </div>
+            <div class="wheel-sectors" id="wheel-sectors"></div>
+          </div>
+          <div class="wheel-center-hub" id="wheel-center-hub">×1</div>
+        </div>
+
+        <div class="modal-actions wheel-actions">
+          <button class="btn-primary btn-large wheel-spin-btn" id="btn-wheel-spin">免费转动</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 激流勇进活动弹窗（大厅与结算界面共用） -->
+    <div class="modal-overlay" id="modal-rapids">
+      <div class="modal-card rapids-modal-card">
+        <button class="modal-close-btn" id="btn-close-rapids" aria-label="关闭">×</button>
+        <div class="rapids-header">
+          <div class="modal-title rapids-title">激流勇进</div>
+        </div>
+
+        <div class="rapids-river-stage" id="rapids-river-stage">
+          <div class="rapids-bank left" aria-hidden="true"></div>
+          <div class="rapids-bank right" aria-hidden="true"></div>
+          <div class="rapids-water-flow" id="rapids-water-flow" aria-hidden="true"></div>
+
+          <!-- 前方目标节点轨道（5 / 10 / 25 / 50 / 100 关） -->
+          <div class="rapids-nodes-viewport">
+            <div class="rapids-nodes-track" id="rapids-nodes-track"></div>
+          </div>
+
+          <!-- 原地往前划的小船 -->
+          <div class="rapids-boat" id="rapids-boat" aria-label="小船">
+            <div class="boat-wake" aria-hidden="true"></div>
+            <div class="boat-oar left" aria-hidden="true"></div>
+            <div class="boat-oar right" aria-hidden="true"></div>
+            <div class="boat-hull">
+              <div class="boat-bow"></div>
+              <div class="boat-seat"></div>
+              <div class="boat-rower"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-primary btn-large" id="btn-rapids-action">JOIN</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 个人信息弹窗 -->
+    <div class="modal-overlay" id="modal-profile">
+      <div class="modal-card profile-modal-card">
+        <button class="modal-close-btn" id="btn-close-profile" aria-label="关闭">×</button>
+        <div class="modal-title profile-title">个人信息</div>
+
+        <!-- 头像与 ID 编辑区 -->
+        <div class="profile-identity-box">
+          <div class="profile-top-row">
+            <div class="profile-avatar-large" id="profile-avatar-preview"></div>
+            <div class="profile-id-field">
+              <label for="profile-id-input">玩家 ID</label>
+              <input type="text" id="profile-id-input" maxlength="14" placeholder="输入昵称" autocomplete="off" />
+            </div>
+          </div>
+          <div class="profile-avatar-label">选择更换头像</div>
+          <div class="profile-avatar-grid" id="profile-avatar-grid"></div>
+        </div>
+
+        <!-- 本周数据概览：累计通关数 / 学习新词数 / 复习单词数 -->
+        <div class="profile-stats-section">
+          <div class="profile-sec-title">本周数据</div>
+          <div class="profile-stats-grid">
+            <div class="profile-stat-card">
+              <span class="profile-stat-val" id="profile-stat-levels">0</span>
+              <span class="profile-stat-name">累计通关数</span>
+            </div>
+            <div class="profile-stat-card">
+              <span class="profile-stat-val" id="profile-stat-new">0</span>
+              <span class="profile-stat-name">学习新词数</span>
+            </div>
+            <div class="profile-stat-card">
+              <span class="profile-stat-val" id="profile-stat-review">0</span>
+              <span class="profile-stat-name">复习单词数</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 最下方：本周每天学习单词数量柱状图 -->
+        <div class="profile-chart-section">
+          <div class="profile-sec-head">
+            <span class="profile-sec-title">本周每日学习单词</span>
+            <span class="profile-chart-sub">目标词 + 额外词</span>
+          </div>
+          <div class="profile-bar-chart" id="profile-bar-chart"></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="mountain-overlay" id="mountain-start" role="dialog" aria-modal="true" aria-labelledby="mountain-start-title" hidden>
+      <div class="mountain-start-card">
+        <button type="button" id="mountain-start-close" aria-label="关闭">×</button>
+        <h2 id="mountain-start-title">Hard Challenge</h2>
+        <div class="mountain-start-reward">
+          <img src="assets/mountain/icon_paper_plan.png" alt="纸飞机">
+          <strong>×2</strong>
+        </div>
+        <p>通关困难关，沿山路向上攀登。</p>
+        <button type="button" class="btn-primary" id="mountain-watch">Watch <small>· 模拟广告</small></button>
+      </div>
+    </section>
+    <section class="mountain-overlay" id="mountain-progress" role="dialog" aria-modal="true" aria-labelledby="mountain-title" hidden>
+      <div class="mountain-content">
+        <h2 id="mountain-title">Hard Challenge</h2>
+        <div class="mountain-clock"><span class="mountain-clock-icon" aria-hidden="true"><img src="assets/mountain/icon_game_bouns_time2.png" alt=""></span><span id="mountain-clock"></span></div>
+        <div id="mountain-reward" aria-live="polite"></div>
+        <div id="mountain-map" aria-hidden="true"></div>
+        <p class="mountain-ranking">击败 <strong id="mountain-score"></strong>% 的玩家</p>
+        <p id="mountain-step"></p>
+        <p id="mountain-caption"></p>
+      </div>
+      <button type="button" id="mountain-dismiss" aria-label="继续或关闭登山进度"></button>
+    </section>
+
+    <canvas id="fx"></canvas>
   </div>
-</div>
 
-<script src="data/levels.js"></script>
-<script src="data/dictionary.js"></script>
-<script>
-  // 参考关卡（从原版 APK 提取）只放在本地 data/reference/，不随仓库发布
-  if (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
-    document.write('<script src="data/reference/levels.js" onerror="this.remove()"><\/script><script src="data/reference/dictionary.js" onerror="this.remove()"><\/script>');
-  }
-</script>
-<script>I18N.apply();</script>
-<script src="game.js"></script>
-<script src="editor.js"></script>
+  <script src="vfx-data.js"></script>
+  <script src="mountain.js"></script>
+  <script src="app.js"></script>
+  <script src="tools/words.js"></script>
+  <script src="tools/levelgen.js"></script>
+  <script src="editor.js"></script>
 </body>
 </html>

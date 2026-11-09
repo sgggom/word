@@ -1,0 +1,245 @@
+.mountain-overlay[hidden],
+.mountain-badge[hidden],
+#mountain-access[hidden],
+#mountain-tools button[hidden] { display: none; }
+
+#btn-start-game,
+#btn-replay { position: relative; }
+
+.mountain-badge {
+  position: absolute;
+  top: -11px;
+  right: -9px;
+  padding: 4px 9px;
+  border-radius: 12px;
+  background: #513c91;
+  color: #fff6e1;
+  box-shadow: 0 2px 4px #2a1c4650;
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1.2;
+  pointer-events: none;
+}
+.mountain-badge.has-coins {
+  padding: 5px 10px 5px 26px;
+  background:
+    url("assets/mountain/icon_coins_1.png") 6px center / 16px auto no-repeat,
+    url("assets/mountain/img_hardlevel_rewardbg.png") center / 100% 100% no-repeat,
+    #6948af;
+  font-size: 14px;
+  color: #fff5ae;
+}
+
+.lobby-bottom { position: relative; }
+#mountain-access {
+  position: absolute;
+  bottom: 15px;
+  border: 0;
+  background: #f8f2e7;
+  color: #514178;
+  border-radius: 14px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#mountain-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+#mountain-tools:has(button:not([hidden])) { margin-inline-end: 6px; }
+#mountain-tools:not(:has(button:not([hidden]))) { display: none; }
+#mountain-tools button {
+  border: 1px solid #d6c8eb;
+  border-radius: 12px;
+  padding: 5px 7px;
+  background: #f2eafb;
+  color: #523a8c;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mountain-debug { display: flex; align-items: center; gap: 5px; margin: 6px 0; font-size: 11px; }
+.mountain-debug select { min-width: 0; font: inherit; }
+
+.mountain-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 65;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+#mountain-start { background: #100923a8; }
+.mountain-start-card {
+  position: relative;
+  display: flex;
+  width: min(81%, 310px);
+  min-height: 154px;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 20px 14px;
+  text-align: center;
+  border-radius: 21px;
+  background: #faf6ff url("assets/mountain/group1_bg.png") center / 100% 100% no-repeat;
+  color: #4b3a69;
+  box-shadow: 0 16px 45px #07051655;
+}
+#mountain-start[data-group="3"] .mountain-start-card {
+  background-image: url("assets/mountain/img_game_hardbg6_0.png");
+  color: #fff;
+}
+#mountain-start.with-reward .mountain-start-card {
+  min-height: 325px;
+  background-image: url("assets/mountain/img_hardlevel_bg.png");
+}
+.mountain-start-card h2 {
+  margin: 0;
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  font: 800 24px/1.05 Georgia, serif;
+  color: #fff;
+  text-shadow: 0 2px 4px #2a175e;
+}
+.mountain-start-card p { margin: auto 0; padding: 12px 0; font-size: 14px; font-weight: 700; }
+#mountain-start-close {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: #29184b6b;
+  color: #fff;
+  font-size: 21px;
+  cursor: pointer;
+}
+.mountain-start-reward { display: grid; justify-items: center; gap: 4px; margin-top: 20px; }
+.mountain-start-reward img { width: 82px; height: 82px; object-fit: contain; }
+.mountain-start-reward strong { padding: 3px 15px; border-radius: 14px; background: #6052ad; color: white; }
+#mountain-watch { min-height: 40px; padding: 0 18px; background: #6651b7; color: #fff; }
+#mountain-watch small { opacity: .82; }
+#mountain-start:not(.with-reward) :is(.mountain-start-reward, #mountain-watch) { display: none; }
+
+#mountain-progress {
+  background: radial-gradient(ellipse at 50% 45%, #18162af5 0%, #090817f2 50%, #050508f2 85%);
+  color: #fff;
+  text-align: center;
+}
+.mountain-content { width: min(86%, 365px); }
+#mountain-title {
+  margin: 0 0 10px;
+  color: #ffda65;
+  font: 800 clamp(31px, 8vw, 42px)/1 Georgia, serif;
+  text-shadow: 0 4px 16px #ffc64245;
+}
+.mountain-clock {
+  display: inline-flex;
+  min-height: 25px;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 12px 1px 5px;
+  border-radius: 20px;
+  background: #5546a7;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.mountain-clock img { width: 20px; height: 20px; object-fit: contain; animation: mountain-clock 3s linear infinite; }
+@keyframes mountain-clock { to { transform: rotate(1turn); } }
+
+#mountain-reward {
+  display: grid;
+  place-items: center;
+  height: 34px;
+  color: #ffe978;
+  font-weight: 850;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+#mountain-map { position: relative; width: min(100%, 37vh); aspect-ratio: 650 / 546; margin: 0 auto; }
+#mountain-map > img { position: absolute; }
+#mountain-map .mountain-light { clip-path: inset(0 100% 0 0); }
+#mountain-progress.animate .mountain-light { transition: clip-path .7s ease; }
+.mountain-flower {
+  position: absolute;
+  width: 7%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: url("assets/mountain/icon_hardlevelresult2_flower2.png") center / auto 75% no-repeat;
+}
+.mountain-flower.bloom { background-image: url("assets/mountain/icon_hardlevelresult2_flower1.png"); }
+#mountain-progress.animate .mountain-flower.bloom { animation: mountain-bloom .55s ease-out; }
+@keyframes mountain-bloom {
+  0% { scale: .6; }
+  55% { scale: 1.25; filter: drop-shadow(0 0 5px #ffe653); }
+}
+.mountain-climber { position: absolute; width: 12%; transform: translate(-22%, -75%); }
+.mountain-climber svg { display: block; width: 100%; animation: mountain-climb .85s ease-in-out infinite alternate; }
+#mountain-progress.animate .mountain-climber { transition: top .65s ease, left .65s ease; }
+@keyframes mountain-climb { to { transform: translateY(-2px) rotate(-4deg); } }
+.mountain-gift {
+  position: absolute;
+  left: 53%;
+  top: 14%;
+  width: 13%;
+  transform: translate(-50%, -50%);
+  isolation: isolate;
+}
+.mountain-gift img { display: block; width: 100%; }
+.mountain-gift::before {
+  content: "";
+  position: absolute;
+  inset: -95%;
+  z-index: -1;
+  background: url("assets/mountain/img_hardlevelresult_light5.png") center / contain no-repeat;
+}
+.summit .mountain-gift img { animation: mountain-open .85s ease-out; }
+.summit .mountain-gift::before { animation: mountain-burst .85s ease-out; }
+@keyframes mountain-open {
+  0% { transform: translateY(3px) scale(1.1,.84); }
+  35% { transform: translateY(-10px) scale(.9,1.12); }
+}
+@keyframes mountain-burst {
+  0% { scale: .7; }
+  40% { scale: 1.6; filter: brightness(1.6); }
+}
+.mountain-ranking { margin: 10px 0 0; font-size: 16px; }
+#mountain-score { color: #ffe978; font-size: 24px; }
+#mountain-step { margin: 5px 0; color: #dcd4f7; font-size: 14px; }
+#mountain-caption { margin: 20px 0 0; color: #f2e9fb; font-size: 13px; }
+#mountain-dismiss { position: absolute; inset: 0; width: 100%; border: 0; background: transparent; cursor: pointer; }
+#mountain-dismiss:focus-visible { outline: 2px solid #e9d48c; outline-offset: -5px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mountain-overlay *, .mountain-overlay *::before { transition: none !important; animation: none !important; }
+}
+
+#mountain-result-coins {
+  margin: 0;
+  color: #6b4e20;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+.mountain-clock-icon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  background: url("assets/mountain/icon_game_bouns_time1.png") center / contain no-repeat;
+}
+.mountain-clock .mountain-clock-icon img { width: 6px; height: 12px; object-fit: contain; }
+.summit .mountain-climber svg { animation: mountain-celebrate .7s ease-out 2; }
+@keyframes mountain-celebrate {
+  45% { transform: translateY(-7px) rotate(8deg); }
+}
